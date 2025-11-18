@@ -9,6 +9,8 @@ import { Proyecto } from '../proyecto/proyecto.entity';
 import { Organizacion } from '../organizacion/organizacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
+import { EliminacionHistorialService } from '../eliminacion-historial/eliminacion-historial.service';
+import { NotificacionService } from '../notificacion/notificacion.service';
 
 @Injectable()
 export class AsignacionService {
@@ -25,6 +27,8 @@ export class AsignacionService {
     private readonly voluntarioRepo: Repository<Voluntario>,
     @InjectRepository(Rol)
     private readonly rolRepo: Repository<Rol>,
+    private readonly eliminacionHistorialService: EliminacionHistorialService,
+    private readonly notificacionService: NotificacionService,
   ) {}
 
   async create(dto: CreateAsignacionDto, user: Usuario) {
@@ -139,13 +143,108 @@ export class AsignacionService {
   async remove(id: number, user: Usuario) {
     const asignacion = await this.repo.findOne({ 
       where: { id_asignacion: id }, 
-      relations: ['tarea', 'tarea.fase', 'rol'] 
+      relations: ['tarea', 'tarea.fase', 'rol', 'voluntario'] 
     });
     if (!asignacion) {
       throw new NotFoundException(`Asignacion con ID ${id} no encontrada`);
     }
     await this.checkOrganizacionOwnership(asignacion.tarea.fase.id_proyecto, user);
+    
+    // Registrar en historial antes de eliminar
+    try {
+      await this.eliminacionHistorialService.registrarEliminacion({
+        tipo_entidad: 'asignacion',
+        id_entidad: id,
+        nombre_entidad: `Asignación de ${asignacion.voluntario?.usuario?.nombre || 'voluntario'} a ${asignacion.tarea?.descripcion || 'tarea'}`,
+        descripcion: `Asignación eliminada: ${asignacion.rol?.nombre || 'Rol'} en tarea "${asignacion.tarea?.descripcion || 'Tarea desconocida'}"`,
+        id_proyecto: asignacion.tarea.fase.id_proyecto,
+        datos_adicionales: {
+          id_voluntario: asignacion.id_voluntario,
+          id_tarea: asignacion.id_tarea,
+          id_rol: asignacion.id_rol,
+          voluntario_nombre: asignacion.voluntario?.usuario?.nombre,
+          tarea_nombre: asignacion.tarea?.descripcion,
+          rol_nombre: asignacion.rol?.nombre,
+        },
+      }, user);
+    } catch (error) {
+      console.error('Error al registrar eliminación en historial:', error);
+    }
+
+    // Notificar al voluntario sobre la eliminación de su asignación
+    try {
+      if (asignacion.voluntario?.id_usuario) {
+        await this.notificacionService.crear({
+          id_usuario: asignacion.voluntario.id_usuario,
+          titulo: 'Asignación Eliminada',
+          mensaje: `Tu asignación como "${asignacion.rol?.nombre || 'Rol'}" en la tarea "${asignacion.tarea?.descripcion || 'Tarea'}" ha sido eliminada del proyecto.`,
+          tipo: 'warning',
+          id_proyecto: asignacion.tarea.fase.id_proyecto,
+          tipo_entidad: 'asignacion',
+          id_entidad: id,
+          datos_adicionales: {
+            id_voluntario: asignacion.id_voluntario,
+            id_tarea: asignacion.id_tarea,
+            id_rol: asignacion.id_rol,
+            tarea_nombre: asignacion.tarea?.descripcion,
+            rol_nombre: asignacion.rol?.nombre,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error al crear notificación:', error);
+    }
+    
     return this.repo.remove(asignacion);
+  }
+
+  /**
+   * Verifica si un voluntario tiene asignaciones activas en un proyecto
+   * @param id_voluntario ID del voluntario
+   * @param id_proyecto ID del proyecto (opcional, si no se proporciona verifica en todos los proyectos)
+   * @returns Array de asignaciones con detalles de tareas
+   */
+  async getVolunteerAssignments(id_voluntario: number, id_proyecto?: number) {
+    const query = this.repo
+      .createQueryBuilder('asignacion')
+      .innerJoinAndSelect('asignacion.tarea', 'tarea')
+      .innerJoinAndSelect('tarea.fase', 'fase')
+      .innerJoinAndSelect('tarea.estado', 'estado')
+      .innerJoinAndSelect('asignacion.rol', 'rol')
+      .where('asignacion.id_voluntario = :id_voluntario', { id_voluntario });
+
+    if (id_proyecto) {
+      query.andWhere('fase.id_proyecto = :id_proyecto', { id_proyecto });
+    }
+
+    return query.getMany();
+  }
+
+  /**
+   * Verifica si un voluntario tiene asignaciones activas en un proyecto específico
+   * @param id_voluntario ID del voluntario
+   * @param id_proyecto ID del proyecto
+   * @returns Objeto con información de las asignaciones
+   */
+  async checkVolunteerAssignmentsInProject(id_voluntario: number, id_proyecto: number) {
+    const asignaciones = await this.getVolunteerAssignments(id_voluntario, id_proyecto);
+    
+    return {
+      hasAssignments: asignaciones.length > 0,
+      count: asignaciones.length,
+      assignments: asignaciones.map(a => ({
+        id_asignacion: a.id_asignacion,
+        tarea: {
+          id_tarea: a.tarea.id_tarea,
+          nombre: a.tarea.nombre,
+          estado: a.tarea.estado?.nombre || 'Sin estado'
+        },
+        rol: {
+          id_rol: a.rol.id_rol,
+          nombre: a.rol.nombre
+        }
+      }))
+    };
   }
 
   private async checkOrganizacionOwnership(id_proyecto: number, user: Usuario) {

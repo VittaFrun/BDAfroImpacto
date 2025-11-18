@@ -12,9 +12,10 @@ import { ProyectoBeneficio } from '../proyecto-beneficio/proyecto-beneficio.enti
 import { Asignacion } from '../asignacion/asignacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
+import { Estado } from '../estado/estado.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Proyecto, Organizacion, Fase, Tarea, HorasVoluntariadas, Certificado, ProyectoBeneficio, Asignacion, Voluntario, Rol])],
+  imports: [TypeOrmModule.forFeature([Proyecto, Organizacion, Fase, Tarea, HorasVoluntariadas, Certificado, ProyectoBeneficio, Asignacion, Voluntario, Rol, Estado])],
   controllers: [ProyectoController],
   providers: [ProyectoService],
   exports: [ProyectoService],

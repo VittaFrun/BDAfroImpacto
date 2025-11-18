@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tarea } from './tarea.entity';
@@ -10,6 +10,7 @@ import { Proyecto } from '../proyecto/proyecto.entity';
 import { Organizacion } from '../organizacion/organizacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Asignacion } from '../asignacion/asignacion.entity';
+import { HorasVoluntariadas } from '../horas-voluntariadas/horas-voluntariadas.entity';
 
 @Injectable()
 export class TareaService {
@@ -26,6 +27,8 @@ export class TareaService {
     private readonly voluntarioRepo: Repository<Voluntario>,
     @InjectRepository(Asignacion)
     private readonly asignacionRepo: Repository<Asignacion>,
+    @InjectRepository(HorasVoluntariadas)
+    private readonly horasRepo: Repository<HorasVoluntariadas>,
   ) {}
 
   async create(dto: CreateTareaDto, user: Usuario) {
@@ -86,6 +89,29 @@ export class TareaService {
       throw new NotFoundException(`Tarea con ID ${id} no encontrada`);
     }
     await this.checkOrganizacionOwnership(tarea.fase.id_proyecto, user);
+    
+    // Validar que no tenga asignaciones activas
+    const asignaciones = await this.asignacionRepo.find({
+      where: { id_tarea: id }
+    });
+    
+    if (asignaciones.length > 0) {
+      throw new BadRequestException(
+        `No se puede eliminar la tarea porque tiene ${asignaciones.length} asignación(es) activa(s). Por favor, elimina primero todas las asignaciones.`
+      );
+    }
+    
+    // Validar que no tenga horas voluntariadas registradas
+    const horasVoluntariadas = await this.horasRepo.find({
+      where: { id_tarea: id }
+    });
+    
+    if (horasVoluntariadas.length > 0) {
+      throw new BadRequestException(
+        `No se puede eliminar la tarea porque tiene ${horasVoluntariadas.length} registro(s) de horas voluntariadas. Por favor, elimina primero todos los registros de horas.`
+      );
+    }
+    
     return this.repo.remove(tarea);
   }
 

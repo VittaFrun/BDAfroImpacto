@@ -32,6 +32,8 @@ import { SolicitudInscripcionModule } from './solicitud-inscripcion/solicitud-in
 import { FormularioInscripcionModule } from './formulario-inscripcion/formulario-inscripcion.module';
 import { DocumentoSolicitudModule } from './documento-solicitud/documento-solicitud.module';
 import { HorasVoluntariadasModule } from './horas-voluntariadas/horas-voluntariadas.module';
+import { EliminacionHistorialModule } from './eliminacion-historial/eliminacion-historial.module';
+import { NotificacionModule } from './notificacion/notificacion.module';
 
 @Module({
   imports: [
@@ -81,6 +83,8 @@ import { HorasVoluntariadasModule } from './horas-voluntariadas/horas-voluntaria
     SolicitudInscripcionModule,
     FormularioInscripcionModule,
     HorasVoluntariadasModule,
+    EliminacionHistorialModule,
+    NotificacionModule,
   ],
 })
 export class AppModule {}

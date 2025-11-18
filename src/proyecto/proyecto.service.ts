@@ -15,6 +15,7 @@ import { Asignacion } from '../asignacion/asignacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
 import { HorasVoluntariadas } from '../horas-voluntariadas/horas-voluntariadas.entity';
+import { Estado } from '../estado/estado.entity';
 
 @Injectable()
 export class ProyectoService {
@@ -37,6 +38,8 @@ export class ProyectoService {
     private readonly rolRepo: Repository<Rol>,
     @InjectRepository(HorasVoluntariadas)
     private readonly horasRepo: Repository<HorasVoluntariadas>,
+    @InjectRepository(Estado)
+    private readonly estadoRepo: Repository<Estado>,
   ) {}
 
   async create(dto: CreateProyectoDto, user: Usuario) {
@@ -320,6 +323,31 @@ export class ProyectoService {
       throw new ForbiddenException('No tienes permiso para eliminar este proyecto.');
     }
 
+    // Validar que no tenga asignaciones activas
+    const asignaciones = await this.asignacionRepo
+      .createQueryBuilder('asignacion')
+      .innerJoin('asignacion.tarea', 'tarea')
+      .innerJoin('tarea.fase', 'fase')
+      .where('fase.id_proyecto = :idProyecto', { idProyecto: id })
+      .getCount();
+    
+    if (asignaciones > 0) {
+      throw new BadRequestException(
+        `No se puede eliminar el proyecto porque tiene ${asignaciones} asignación(es) activa(s). Por favor, elimina primero todas las asignaciones de voluntarios.`
+      );
+    }
+
+    // Validar que no tenga horas voluntariadas registradas
+    const horasVoluntariadas = await this.horasRepo.count({
+      where: { id_proyecto: id }
+    });
+    
+    if (horasVoluntariadas > 0) {
+      throw new BadRequestException(
+        `No se puede eliminar el proyecto porque tiene ${horasVoluntariadas} registro(s) de horas voluntariadas. Por favor, elimina primero todos los registros de horas.`
+      );
+    }
+
     try {
       return await this.repo.remove(proyecto);
     } catch (error) {
@@ -334,7 +362,7 @@ export class ProyectoService {
         errorMessage.includes('Cannot delete or update a parent row')
       ) {
         throw new BadRequestException(
-          'No se puede eliminar el proyecto porque tiene registros relacionados (solicitudes, asignaciones, donaciones, etc.). Por favor, elimina primero todos los registros relacionados.'
+          'No se puede eliminar el proyecto porque tiene registros relacionados (solicitudes, donaciones, etc.). Por favor, elimina primero todos los registros relacionados.'
         );
       }
       // Re-lanzar otros errores
@@ -397,10 +425,96 @@ export class ProyectoService {
 
     const fase = await this.faseRepo.findOne({
       where: { id_fase: faseId, id_proyecto: proyectoId },
+      relations: ['tareas', 'tareas.estado']
     });
 
     if (!fase) {
       throw new NotFoundException(`Fase con ID ${faseId} no encontrada en el proyecto ${proyectoId}`);
+    }
+
+    // Validar que la fase no tenga tareas con asignaciones o horas voluntariadas
+    if (fase.tareas && fase.tareas.length > 0) {
+      const tareasCompletadas = [];
+      const tareasConAsignaciones = [];
+      const tareasConHoras = [];
+      
+      // Estados que representan tareas completadas
+      const estadosCompletados = ['Completado', 'Finalizado', 'Terminado', 'Cerrado', 'Completada', 'Finalizada'];
+      
+      for (const tarea of fase.tareas) {
+        // Cargar estado si no está cargado
+        if (!tarea.estado && tarea.id_estado) {
+          tarea.estado = await this.estadoRepo.findOne({ where: { id_estado: tarea.id_estado } });
+        }
+        
+        // Verificar si la tarea está completada
+        const estadoNombre = tarea.estado?.nombre || '';
+        const estaCompletada = estadosCompletados.some(estado => 
+          estadoNombre.toLowerCase().includes(estado.toLowerCase())
+        );
+        
+        if (estaCompletada) {
+          tareasCompletadas.push(tarea);
+        }
+        
+        const asignaciones = await this.asignacionRepo.find({
+          where: { id_tarea: tarea.id_tarea }
+        });
+        
+        if (asignaciones.length > 0) {
+          tareasConAsignaciones.push({ tarea, count: asignaciones.length });
+        }
+        
+        const horasVoluntariadas = await this.horasRepo.find({
+          where: { id_tarea: tarea.id_tarea }
+        });
+        
+        if (horasVoluntariadas.length > 0) {
+          tareasConHoras.push({ tarea, count: horasVoluntariadas.length });
+        }
+      }
+      
+      // Construir mensaje de error detallado
+      const mensajesError = [];
+      
+      if (tareasCompletadas.length > 0) {
+        mensajesError.push(
+          `La fase tiene ${tareasCompletadas.length} tarea(s) completada(s). ` +
+          `Eliminar una fase con tareas completadas puede afectar el historial del proyecto. ` +
+          `Por favor, verifica que realmente deseas eliminar esta fase.`
+        );
+      }
+      
+      if (tareasConAsignaciones.length > 0) {
+        const totalAsignaciones = tareasConAsignaciones.reduce((sum, item) => sum + item.count, 0);
+        mensajesError.push(
+          `La fase tiene ${tareasConAsignaciones.length} tarea(s) con ${totalAsignaciones} asignación(es) activa(s). ` +
+          `Por favor, elimina primero todas las asignaciones de las tareas de esta fase.`
+        );
+      }
+      
+      if (tareasConHoras.length > 0) {
+        const totalHoras = tareasConHoras.reduce((sum, item) => sum + item.count, 0);
+        mensajesError.push(
+          `La fase tiene ${tareasConHoras.length} tarea(s) con ${totalHoras} registro(s) de horas voluntariadas. ` +
+          `Por favor, elimina primero todos los registros de horas de las tareas de esta fase.`
+        );
+      }
+      
+      // Si hay tareas completadas pero no hay asignaciones ni horas, permitir con advertencia
+      if (tareasCompletadas.length > 0 && tareasConAsignaciones.length === 0 && tareasConHoras.length === 0) {
+        // Permitir eliminación pero lanzar BadRequestException con mensaje de advertencia
+        throw new BadRequestException(
+          `ADVERTENCIA: La fase tiene ${tareasCompletadas.length} tarea(s) completada(s). ` +
+          `Eliminar esta fase eliminará el historial de estas tareas completadas. ` +
+          `Si estás seguro, puedes proceder eliminando primero las tareas completadas manualmente.`
+        );
+      }
+      
+      // Si hay asignaciones o horas, bloquear eliminación
+      if (tareasConAsignaciones.length > 0 || tareasConHoras.length > 0) {
+        throw new BadRequestException(mensajesError.join(' '));
+      }
     }
 
     await this.faseRepo.remove(fase);

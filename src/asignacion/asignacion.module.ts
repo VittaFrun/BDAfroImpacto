@@ -9,9 +9,15 @@ import { Proyecto } from '../proyecto/proyecto.entity';
 import { Organizacion } from '../organizacion/organizacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
+import { EliminacionHistorialModule } from '../eliminacion-historial/eliminacion-historial.module';
+import { NotificacionModule } from '../notificacion/notificacion.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Asignacion, Tarea, Fase, Proyecto, Organizacion, Voluntario, Rol])],
+  imports: [
+    TypeOrmModule.forFeature([Asignacion, Tarea, Fase, Proyecto, Organizacion, Voluntario, Rol]),
+    EliminacionHistorialModule,
+    NotificacionModule,
+  ],
   controllers: [AsignacionController],
   providers: [AsignacionService],
 })

@@ -41,4 +41,19 @@ export class AsignacionController {
   remove(@Param('id') id: string, @GetUser() user: Usuario) {
     return this.service.remove(+id, user);
   }
+
+  @Get('voluntario/:idVoluntario/verificar')
+  @Roles('organizacion', 'admin')
+  checkVolunteerAssignments(@Param('idVoluntario') idVoluntario: string) {
+    return this.service.getVolunteerAssignments(+idVoluntario);
+  }
+
+  @Get('voluntario/:idVoluntario/proyecto/:idProyecto/verificar')
+  @Roles('organizacion', 'admin')
+  checkVolunteerAssignmentsInProject(
+    @Param('idVoluntario') idVoluntario: string,
+    @Param('idProyecto') idProyecto: string
+  ) {
+    return this.service.checkVolunteerAssignmentsInProject(+idVoluntario, +idProyecto);
+  }
 }
