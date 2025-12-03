@@ -39,9 +39,6 @@ let RolController = class RolController {
             filters.id_proyecto = parseInt(id_proyecto);
         return this.service.findAll(Object.keys(filters).length > 0 ? filters : undefined);
     }
-    findSystemRoles() {
-        return this.service.findSystemRoles();
-    }
     findByOrganization(id) {
         return this.service.findByOrganization(id);
     }
@@ -56,6 +53,12 @@ let RolController = class RolController {
     }
     remove(id, user) {
         return this.service.remove(id, user);
+    }
+    getPermisos(id) {
+        return this.service.getPermisos(id);
+    }
+    updatePermisos(id, body, user) {
+        return this.service.updatePermisos(id, body.permisos || [], user);
     }
 };
 exports.RolController = RolController;
@@ -78,13 +81,6 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], RolController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Get)('sistema'),
-    (0, roles_decorator_1.Roles)('admin', 'organizacion', 'voluntario'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], RolController.prototype, "findSystemRoles", null);
 __decorate([
     (0, common_1.Get)('organizacion/:id'),
     (0, roles_decorator_1.Roles)('admin', 'organizacion', 'voluntario'),
@@ -129,6 +125,24 @@ __decorate([
     __metadata("design:paramtypes", [Number, user_entity_1.Usuario]),
     __metadata("design:returntype", void 0)
 ], RolController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)(':id/permisos'),
+    (0, roles_decorator_1.Roles)('admin', 'organizacion'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], RolController.prototype, "getPermisos", null);
+__decorate([
+    (0, common_1.Patch)(':id/permisos'),
+    (0, roles_decorator_1.Roles)('admin', 'organizacion'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, user_entity_1.Usuario]),
+    __metadata("design:returntype", void 0)
+], RolController.prototype, "updatePermisos", null);
 exports.RolController = RolController = __decorate([
     (0, common_1.Controller)('roles'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),

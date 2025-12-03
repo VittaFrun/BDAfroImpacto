@@ -6,9 +6,10 @@ import { RolController } from './rol.controller';
 import { Organizacion } from '../organizacion/organizacion.entity';
 import { Proyecto } from '../proyecto/proyecto.entity';
 import { Asignacion } from '../asignacion/asignacion.entity';
+import { Permiso } from '../permiso/permiso.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Rol, Organizacion, Proyecto, Asignacion])],
+  imports: [TypeOrmModule.forFeature([Rol, Organizacion, Proyecto, Asignacion, Permiso])],
   controllers: [RolController],
   providers: [RolService],
   exports: [RolService],

@@ -25,6 +25,9 @@ export class Tarea {
   @Column({ length: 100, nullable: true })
   complejidad: string;
 
+  @Column('text', { nullable: true })
+  observaciones: string;
+
   @Column({ name: 'id_estado', nullable: true })
   id_estado: number;
 

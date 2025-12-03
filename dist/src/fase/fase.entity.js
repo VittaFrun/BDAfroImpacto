@@ -33,6 +33,14 @@ __decorate([
     __metadata("design:type", Number)
 ], Fase.prototype, "orden", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ name: 'fecha_inicio', type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Fase.prototype, "fecha_inicio", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'fecha_fin', type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Fase.prototype, "fecha_fin", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'id_proyecto' }),
     __metadata("design:type", Number)
 ], Fase.prototype, "id_proyecto", void 0);

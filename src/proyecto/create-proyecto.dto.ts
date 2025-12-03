@@ -37,6 +37,11 @@ export class CreateProyectoDto {
 
   @IsString()
   @IsOptional()
+  @Length(0, 255, { message: 'El banner no puede exceder 255 caracteres' })
+  banner?: string;
+
+  @IsString()
+  @IsOptional()
   @Length(0, 255, { message: 'El documento no puede exceder 255 caracteres' })
   documento?: string;
 

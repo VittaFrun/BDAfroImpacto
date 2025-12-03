@@ -26,7 +26,7 @@ __decorate([
     __metadata("design:type", String)
 ], CreateRolDto.prototype, "descripcion", void 0);
 __decorate([
-    (0, class_validator_1.IsEnum)(['sistema', 'organizacion', 'proyecto']),
+    (0, class_validator_1.IsEnum)(['organizacion', 'proyecto']),
     __metadata("design:type", String)
 ], CreateRolDto.prototype, "tipo_rol", void 0);
 __decorate([
@@ -59,4 +59,18 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => value === true || value === 'true' || value === 1),
     __metadata("design:type", Boolean)
 ], CreateRolDto.prototype, "activo", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value && typeof value === 'string') {
+            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+            if (hexRegex.test(value)) {
+                return value.toUpperCase();
+            }
+        }
+        return value || '#2196F3';
+    }),
+    __metadata("design:type", String)
+], CreateRolDto.prototype, "color", void 0);
 //# sourceMappingURL=create-rol.dto.js.map

@@ -1,9 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { OrganizacionService } from './organizacion.service';
 import { CreateOrganizacionDto } from './create-organizacion.dto';
 import { UpdateOrganizacionDto } from './update-organizacion.dto';
 
-@Controller('organizacion')
+@Controller('organizaciones')
 export class OrganizacionController {
   constructor(private readonly service: OrganizacionService) {}
 
@@ -30,5 +30,21 @@ export class OrganizacionController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.service.remove(+id);
+  }
+
+  // Endpoints públicos (sin autenticación requerida)
+  @Get('publicas')
+  findPublicas() {
+    return this.service.findPublicas();
+  }
+
+  @Get(':id/publico')
+  findPublico(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findPublico(id);
+  }
+
+  @Get(':id/proyectos-publicos')
+  findProyectosPublicos(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findProyectosPublicos(id);
   }
 }

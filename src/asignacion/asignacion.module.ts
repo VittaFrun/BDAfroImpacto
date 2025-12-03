@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Asignacion } from './asignacion.entity';
 import { AsignacionService } from './asignacion.service';
 import { AsignacionController } from './asignacion.controller';
+import { SmartAssignmentService } from './smart-assignment.service';
 import { Tarea } from '../tarea/tarea.entity';
 import { Fase } from '../fase/fase.entity';
 import { Proyecto } from '../proyecto/proyecto.entity';
@@ -19,6 +20,6 @@ import { NotificacionModule } from '../notificacion/notificacion.module';
     NotificacionModule,
   ],
   controllers: [AsignacionController],
-  providers: [AsignacionService],
+  providers: [AsignacionService, SmartAssignmentService],
 })
 export class AsignacionModule {}

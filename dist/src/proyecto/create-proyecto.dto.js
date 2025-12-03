@@ -58,6 +58,12 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Length)(0, 255, { message: 'El banner no puede exceder 255 caracteres' }),
+    __metadata("design:type", String)
+], CreateProyectoDto.prototype, "banner", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.Length)(0, 255, { message: 'El documento no puede exceder 255 caracteres' }),
     __metadata("design:type", String)
 ], CreateProyectoDto.prototype, "documento", void 0);

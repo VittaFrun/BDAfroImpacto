@@ -6,11 +6,15 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { Usuario } from '../users/user.entity';
+import { SmartAssignmentService, SmartSuggestionRequest } from './smart-assignment.service';
 
 @Controller('asignacion')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class AsignacionController {
-  constructor(private readonly service: AsignacionService) {}
+  constructor(
+    private readonly service: AsignacionService,
+    private readonly smartAssignmentService: SmartAssignmentService
+  ) {}
 
   @Post()
   @Roles('organizacion', 'admin')
@@ -55,5 +59,14 @@ export class AsignacionController {
     @Param('idProyecto') idProyecto: string
   ) {
     return this.service.checkVolunteerAssignmentsInProject(+idVoluntario, +idProyecto);
+  }
+
+  /**
+   * Genera sugerencias inteligentes de asignación
+   */
+  @Post('smart-suggestions')
+  @Roles('organizacion', 'admin')
+  async generateSmartSuggestions(@Body() request: SmartSuggestionRequest, @GetUser() user: Usuario) {
+    return await this.smartAssignmentService.generateSmartSuggestions(request);
   }
 }

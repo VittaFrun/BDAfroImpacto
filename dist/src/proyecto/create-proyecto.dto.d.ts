@@ -6,6 +6,7 @@ export declare class CreateProyectoDto {
     fecha_inicio: string;
     fecha_fin: string;
     imagen_principal?: string;
+    banner?: string;
     documento?: string;
     presupuesto_total?: number;
     id_estado?: number;

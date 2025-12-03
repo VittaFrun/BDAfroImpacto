@@ -17,11 +17,11 @@ export class Rol {
 
   @Column({
     type: 'enum',
-    enum: ['sistema', 'organizacion', 'proyecto'],
+    enum: ['organizacion', 'proyecto'],
     name: 'tipo_rol',
-    default: 'sistema'
+    default: 'organizacion'
   })
-  tipo_rol: 'sistema' | 'organizacion' | 'proyecto';
+  tipo_rol: 'organizacion' | 'proyecto';
 
   @Column({ name: 'id_organizacion', nullable: true })
   id_organizacion: number | null;
@@ -39,6 +39,9 @@ export class Rol {
 
   @Column({ default: true })
   activo: boolean;
+
+  @Column({ length: 7, default: '#2196F3', nullable: true })
+  color: string;
 
   @Column({ name: 'creado_por', nullable: true })
   creado_por: number | null;

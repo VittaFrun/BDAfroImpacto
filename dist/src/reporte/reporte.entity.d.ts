@@ -2,14 +2,15 @@ import { Proyecto } from '../proyecto/proyecto.entity';
 export declare class Reporte {
     id_reporte: number;
     tipo: string;
-    formato: string;
-    fecha: Date;
+    formato: 'PDF' | 'Excel' | 'CSV';
+    estado: 'pendiente' | 'generando' | 'listo' | 'error';
+    id_proyecto: number;
     contenido: string;
-    estado: string;
     incluir_graficos: boolean;
     descargas: number;
-    id_proyecto: number;
-    proyecto: Proyecto;
+    fecha_inicio: Date;
+    fecha_fin: Date;
     creado_en: Date;
     actualizado_en: Date;
+    proyecto: Proyecto;
 }

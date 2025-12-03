@@ -21,12 +21,18 @@ const proyecto_beneficio_entity_1 = require("../proyecto-beneficio/proyecto-bene
 const asignacion_entity_1 = require("../asignacion/asignacion.entity");
 const voluntario_entity_1 = require("../voluntario/voluntario.entity");
 const rol_entity_1 = require("../rol/rol.entity");
+const estado_entity_1 = require("../estado/estado.entity");
+const solicitud_inscripcion_entity_1 = require("../solicitud-inscripcion/solicitud-inscripcion.entity");
+const notificacion_module_1 = require("../notificacion/notificacion.module");
 let ProyectoModule = class ProyectoModule {
 };
 exports.ProyectoModule = ProyectoModule;
 exports.ProyectoModule = ProyectoModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([proyecto_entity_1.Proyecto, organizacion_entity_1.Organizacion, fase_entity_1.Fase, tarea_entity_1.Tarea, horas_voluntariadas_entity_1.HorasVoluntariadas, certificado_entity_1.Certificado, proyecto_beneficio_entity_1.ProyectoBeneficio, asignacion_entity_1.Asignacion, voluntario_entity_1.Voluntario, rol_entity_1.Rol])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([proyecto_entity_1.Proyecto, organizacion_entity_1.Organizacion, fase_entity_1.Fase, tarea_entity_1.Tarea, horas_voluntariadas_entity_1.HorasVoluntariadas, certificado_entity_1.Certificado, proyecto_beneficio_entity_1.ProyectoBeneficio, asignacion_entity_1.Asignacion, voluntario_entity_1.Voluntario, rol_entity_1.Rol, estado_entity_1.Estado, solicitud_inscripcion_entity_1.SolicitudInscripcion]),
+            notificacion_module_1.NotificacionModule
+        ],
         controllers: [proyecto_controller_1.ProyectoController],
         providers: [proyecto_service_1.ProyectoService],
         exports: [proyecto_service_1.ProyectoService],

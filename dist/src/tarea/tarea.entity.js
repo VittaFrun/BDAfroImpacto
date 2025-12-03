@@ -44,6 +44,10 @@ __decorate([
     __metadata("design:type", String)
 ], Tarea.prototype, "complejidad", void 0);
 __decorate([
+    (0, typeorm_1.Column)('text', { nullable: true }),
+    __metadata("design:type", String)
+], Tarea.prototype, "observaciones", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'id_estado', nullable: true }),
     __metadata("design:type", Number)
 ], Tarea.prototype, "id_estado", void 0);

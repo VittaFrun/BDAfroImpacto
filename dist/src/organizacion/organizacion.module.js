@@ -13,12 +13,13 @@ const organizacion_entity_1 = require("./organizacion.entity");
 const organizacion_service_1 = require("./organizacion.service");
 const organizacion_controller_1 = require("./organizacion.controller");
 const user_entity_1 = require("../users/user.entity");
+const proyecto_entity_1 = require("../proyecto/proyecto.entity");
 let OrganizacionModule = class OrganizacionModule {
 };
 exports.OrganizacionModule = OrganizacionModule;
 exports.OrganizacionModule = OrganizacionModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([organizacion_entity_1.Organizacion, user_entity_1.Usuario])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([organizacion_entity_1.Organizacion, user_entity_1.Usuario, proyecto_entity_1.Proyecto])],
         controllers: [organizacion_controller_1.OrganizacionController],
         providers: [organizacion_service_1.OrganizacionService],
         exports: [organizacion_service_1.OrganizacionService],

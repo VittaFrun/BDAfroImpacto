@@ -31,4 +31,12 @@ export class FaseController {
   remove(@Param('id') id: string) {
     return this.service.remove(+id);
   }
+
+  @Post('proyecto/:projectId/reorder')
+  reorderPhases(
+    @Param('projectId') projectId: string,
+    @Body() newOrder: { id_fase: number; orden: number }[]
+  ) {
+    return this.service.reorderPhases(+projectId, newOrder);
+  }
 }

@@ -10,6 +10,7 @@ export declare class Tarea {
     fecha_fin: Date;
     prioridad: string;
     complejidad: string;
+    observaciones: string;
     id_estado: number;
     estado: Estado;
     id_fase: number;

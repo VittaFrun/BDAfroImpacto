@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, Length, Min, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Length, Min, IsOptional, IsDateString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateFaseDto {
@@ -17,6 +17,14 @@ export class CreateFaseDto {
   @Min(1, { message: 'El orden debe ser mayor a 0' })
   @Transform(({ value }) => parseInt(value))
   orden: number;
+
+  @IsDateString({}, { message: 'La fecha de inicio debe ser una fecha válida' })
+  @IsOptional()
+  fecha_inicio?: string;
+
+  @IsDateString({}, { message: 'La fecha de fin debe ser una fecha válida' })
+  @IsOptional()
+  fecha_fin?: string;
 
   // id_proyecto es opcional porque se toma del parámetro de la URL
   @IsNumber({}, { message: 'El ID del proyecto debe ser un número válido' })

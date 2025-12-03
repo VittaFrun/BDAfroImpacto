@@ -33,9 +33,9 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({
         type: 'enum',
-        enum: ['sistema', 'organizacion', 'proyecto'],
+        enum: ['organizacion', 'proyecto'],
         name: 'tipo_rol',
-        default: 'sistema'
+        default: 'organizacion'
     }),
     __metadata("design:type", String)
 ], Rol.prototype, "tipo_rol", void 0);
@@ -61,6 +61,10 @@ __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
 ], Rol.prototype, "activo", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 7, default: '#2196F3', nullable: true }),
+    __metadata("design:type", String)
+], Rol.prototype, "color", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'creado_por', nullable: true }),
     __metadata("design:type", Number)

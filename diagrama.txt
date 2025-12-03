@@ -14,10 +14,11 @@ Table Rol {
   id_rol int [pk, increment]
   nombre varchar(100)
   descripcion varchar(255)
-  tipo_rol enum('sistema', 'organizacion', 'proyecto') [not null] // Tipo de rol: sistema (global), organizacion (reutilizable por org), proyecto (específico)
+  tipo_rol enum('organizacion', 'proyecto') [not null] // Tipo de rol: organizacion (reutilizable por org), proyecto (específico)
   id_organizacion int [nullable] // FK a Organizacion (solo para tipo 'organizacion')
   id_proyecto int [nullable] // FK a Proyecto (solo para tipo 'proyecto')
   activo bool [default: true] // Si el rol está activo y disponible
+  color varchar(7) [default: '#2196F3', nullable] // Color hexadecimal del rol para identificación visual
   creado_por int [nullable] // FK a Usuario (para auditoría)
   creado_en datetime
   actualizado_en datetime
@@ -130,6 +131,7 @@ Table Proyecto {
   fecha_inicio date
   fecha_fin date
   imagen_principal varchar(255) // Ruta o URL de la imagen destacada
+  banner varchar(255) [nullable] // Ruta o URL del banner del proyecto
   documento varchar(255) [nullable]
   presupuesto_total decimal(12,2) [default: 0] // Presupuesto total del proyecto
   es_publico bool [default: true] // Si el proyecto es visible públicamente
@@ -145,6 +147,8 @@ Table Fase {
   nombre varchar(100)
   descripcion text
   orden int
+  fecha_inicio date [nullable] // Fecha de inicio de la fase
+  fecha_fin date [nullable] // Fecha de fin de la fase
   id_proyecto int
   creado_en datetime
   actualizado_en datetime
@@ -157,6 +161,7 @@ Table Tarea {
   fecha_fin date
   prioridad enum('Alta', 'Media', 'Baja')
   complejidad varchar(100)
+  observaciones text [nullable] // Observaciones adicionales sobre la tarea
   id_estado int
   id_fase int
   creado_en datetime

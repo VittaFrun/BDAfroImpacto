@@ -58,6 +58,9 @@ let ProyectoController = class ProyectoController {
     updatePhase(id, phaseId, dto, user) {
         return this.service.updateFase(+id, +phaseId, dto, user);
     }
+    reorderPhases(id, body, user) {
+        return this.service.reorderFases(+id, body.ordenes, user);
+    }
     removePhase(id, phaseId, user) {
         return this.service.removeFase(+id, +phaseId, user);
     }
@@ -163,6 +166,17 @@ __decorate([
     __metadata("design:paramtypes", [String, String, Object, user_entity_1.Usuario]),
     __metadata("design:returntype", void 0)
 ], ProyectoController.prototype, "updatePhase", null);
+__decorate([
+    (0, common_1.Put)(':id/phases/reorder'),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('organizacion', 'admin'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, user_entity_1.Usuario]),
+    __metadata("design:returntype", void 0)
+], ProyectoController.prototype, "reorderPhases", null);
 __decorate([
     (0, common_1.Delete)(':id/phases/:phaseId'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),

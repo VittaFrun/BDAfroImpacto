@@ -36,6 +36,15 @@ let OrganizacionController = class OrganizacionController {
     remove(id) {
         return this.service.remove(+id);
     }
+    findPublicas() {
+        return this.service.findPublicas();
+    }
+    findPublico(id) {
+        return this.service.findPublico(id);
+    }
+    findProyectosPublicos(id) {
+        return this.service.findProyectosPublicos(id);
+    }
 };
 exports.OrganizacionController = OrganizacionController;
 __decorate([
@@ -73,8 +82,28 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], OrganizacionController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)('publicas'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], OrganizacionController.prototype, "findPublicas", null);
+__decorate([
+    (0, common_1.Get)(':id/publico'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], OrganizacionController.prototype, "findPublico", null);
+__decorate([
+    (0, common_1.Get)(':id/proyectos-publicos'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", void 0)
+], OrganizacionController.prototype, "findProyectosPublicos", null);
 exports.OrganizacionController = OrganizacionController = __decorate([
-    (0, common_1.Controller)('organizacion'),
+    (0, common_1.Controller)('organizaciones'),
     __metadata("design:paramtypes", [organizacion_service_1.OrganizacionService])
 ], OrganizacionController);
 //# sourceMappingURL=organizacion.controller.js.map

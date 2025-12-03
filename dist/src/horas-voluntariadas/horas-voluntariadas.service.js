@@ -80,11 +80,42 @@ let HorasVoluntariadasService = class HorasVoluntariadasService {
                 }
             }
         }
+        const fechaRegistro = new Date(dto.fecha);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        fechaRegistro.setHours(0, 0, 0, 0);
+        if (fechaRegistro > hoy) {
+            throw new common_1.BadRequestException('No se pueden registrar horas para fechas futuras');
+        }
+        if (dto.horas_trabajadas <= 0) {
+            throw new common_1.BadRequestException('Las horas trabajadas deben ser mayores a 0');
+        }
+        if (dto.horas_trabajadas > 24) {
+            throw new common_1.BadRequestException('No se pueden registrar más de 24 horas en un día');
+        }
+        if (dto.horas_trabajadas > 16) {
+            throw new common_1.BadRequestException('Se recomienda un máximo de 16 horas por día por razones de seguridad. Si necesitas registrar más, contacta a la organización.');
+        }
+        if (dto.horas_trabajadas > 12 && dto.horas_trabajadas <= 16) {
+        }
+        const horasDelDia = await this.repo.find({
+            where: {
+                id_voluntario: voluntario.id_voluntario,
+                fecha: fechaRegistro
+            }
+        });
+        const totalHorasDelDia = horasDelDia.reduce((sum, h) => sum + parseFloat(h.horas_trabajadas.toString()), 0);
+        const nuevoTotal = totalHorasDelDia + dto.horas_trabajadas;
+        if (nuevoTotal > 24) {
+            throw new common_1.BadRequestException(`Ya has registrado ${totalHorasDelDia.toFixed(2)} horas para esta fecha. El total (${nuevoTotal.toFixed(2)} horas) no puede exceder 24 horas por día.`);
+        }
+        if (nuevoTotal > 16) {
+        }
         const horas = this.repo.create({
             id_voluntario: voluntario.id_voluntario,
             id_proyecto: dto.id_proyecto,
             id_tarea: dto.id_tarea || null,
-            fecha: new Date(dto.fecha),
+            fecha: fechaRegistro,
             horas_trabajadas: dto.horas_trabajadas,
             descripcion: dto.descripcion || null,
             verificada: false

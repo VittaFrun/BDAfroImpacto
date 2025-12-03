@@ -20,12 +20,14 @@ const rol_entity_1 = require("./rol.entity");
 const organizacion_entity_1 = require("../organizacion/organizacion.entity");
 const proyecto_entity_1 = require("../proyecto/proyecto.entity");
 const asignacion_entity_1 = require("../asignacion/asignacion.entity");
+const permiso_entity_1 = require("../permiso/permiso.entity");
 let RolService = class RolService {
-    constructor(repo, orgRepo, proyectoRepo, asignacionRepo) {
+    constructor(repo, orgRepo, proyectoRepo, asignacionRepo, permisoRepo) {
         this.repo = repo;
         this.orgRepo = orgRepo;
         this.proyectoRepo = proyectoRepo;
         this.asignacionRepo = asignacionRepo;
+        this.permisoRepo = permisoRepo;
     }
     async create(dto, user) {
         var _a;
@@ -38,6 +40,14 @@ let RolService = class RolService {
         if (existingRol) {
             throw new common_1.ConflictException(`Ya existe un rol con el nombre "${dto.nombre.trim()}" en este contexto`);
         }
+        let color = dto.color || '#2196F3';
+        if (color && !color.startsWith('#')) {
+            color = '#' + color;
+        }
+        const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        if (!hexRegex.test(color)) {
+            color = '#2196F3';
+        }
         const rol = this.repo.create({
             nombre: dto.nombre.trim(),
             descripcion: ((_a = dto.descripcion) === null || _a === void 0 ? void 0 : _a.trim()) || '',
@@ -45,6 +55,7 @@ let RolService = class RolService {
             id_organizacion: dto.tipo_rol === 'organizacion' ? dto.id_organizacion : null,
             id_proyecto: dto.tipo_rol === 'proyecto' ? dto.id_proyecto : null,
             activo: dto.activo !== undefined ? dto.activo : true,
+            color: color.toUpperCase(),
             creado_por: user.id_usuario,
         });
         return this.repo.save(rol);
@@ -66,19 +77,14 @@ let RolService = class RolService {
             relations: ['organizacion', 'proyecto', 'creador']
         });
     }
-    async findSystemRoles() {
-        return this.repo.find({
-            where: { tipo_rol: 'sistema', activo: true },
-            order: { nombre: 'ASC' }
-        });
-    }
     async findByOrganization(id_organizacion) {
         return this.repo.find({
-            where: [
-                { tipo_rol: 'sistema', activo: true },
-                { tipo_rol: 'organizacion', id_organizacion, activo: true }
-            ],
-            order: { tipo_rol: 'ASC', nombre: 'ASC' },
+            where: {
+                tipo_rol: 'organizacion',
+                id_organizacion,
+                activo: true
+            },
+            order: { nombre: 'ASC' },
             relations: ['organizacion']
         });
     }
@@ -92,7 +98,6 @@ let RolService = class RolService {
         }
         return this.repo.find({
             where: [
-                { tipo_rol: 'sistema', activo: true },
                 { tipo_rol: 'organizacion', id_organizacion: proyecto.id_organizacion, activo: true },
                 { tipo_rol: 'proyecto', id_proyecto, activo: true }
             ],
@@ -112,9 +117,6 @@ let RolService = class RolService {
     }
     async update(id, dto, user) {
         const rol = await this.findOne(id);
-        if (rol.tipo_rol === 'sistema' && user.tipo_usuario !== 'admin') {
-            throw new common_1.ForbiddenException('No se pueden modificar roles del sistema');
-        }
         await this.validateUpdatePermissions(rol, user);
         if (dto.nombre && dto.nombre.trim() !== rol.nombre) {
             if (!dto.nombre.trim()) {
@@ -139,13 +141,23 @@ let RolService = class RolService {
         if (dto.activo !== undefined) {
             rol.activo = dto.activo;
         }
+        if (dto.color !== undefined) {
+            let color = dto.color;
+            if (color && !color.startsWith('#')) {
+                color = '#' + color;
+            }
+            const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+            if (hexRegex.test(color)) {
+                rol.color = color.toUpperCase();
+            }
+            else {
+                rol.color = rol.color || '#2196F3';
+            }
+        }
         return this.repo.save(rol);
     }
     async remove(id, user) {
         const rol = await this.findOne(id);
-        if (rol.tipo_rol === 'sistema') {
-            throw new common_1.ForbiddenException('No se pueden eliminar roles del sistema');
-        }
         await this.validateDeletePermissions(rol, user);
         const asignaciones = await this.asignacionRepo.find({
             where: { id_rol: id }
@@ -157,9 +169,6 @@ let RolService = class RolService {
         return { message: 'Rol eliminado correctamente' };
     }
     validateTipoRol(dto) {
-        if (dto.tipo_rol === 'sistema' && (dto.id_organizacion || dto.id_proyecto)) {
-            throw new common_1.BadRequestException('Los roles del sistema no pueden tener id_organizacion ni id_proyecto');
-        }
         if (dto.tipo_rol === 'organizacion') {
             if (!dto.id_organizacion) {
                 throw new common_1.BadRequestException('Los roles de organización requieren id_organizacion');
@@ -178,25 +187,47 @@ let RolService = class RolService {
         }
     }
     async validatePermissions(dto, user) {
-        if (user.tipo_usuario === 'admin') {
+        const userId = user.id_usuario || user.id;
+        const userType = user.tipo_usuario;
+        if (!userId) {
+            console.error(`[RolService] Usuario sin id_usuario válido:`, user);
+            throw new common_1.ForbiddenException('Error al verificar la identidad del usuario');
+        }
+        if (userType === 'admin') {
             return;
         }
-        if (user.tipo_usuario === 'organizacion') {
-            if (dto.tipo_rol === 'sistema') {
-                throw new common_1.ForbiddenException('Solo los administradores pueden crear roles del sistema');
-            }
+        if (userType === 'organizacion') {
             if (dto.tipo_rol === 'organizacion') {
-                const org = await this.orgRepo.findOne({ where: { id_organizacion: dto.id_organizacion, id_usuario: user.id_usuario } });
+                const org = await this.orgRepo.findOne({ where: { id_organizacion: dto.id_organizacion, id_usuario: userId } });
                 if (!org) {
                     throw new common_1.ForbiddenException('No tienes permiso para crear roles para esta organización');
                 }
             }
             if (dto.tipo_rol === 'proyecto') {
+                if (!dto.id_proyecto) {
+                    throw new common_1.ForbiddenException('El proyecto es requerido para roles de proyecto');
+                }
                 const proyecto = await this.proyectoRepo.findOne({
                     where: { id_proyecto: dto.id_proyecto },
                     relations: ['organizacion']
                 });
-                if (!proyecto || proyecto.organizacion.id_usuario !== user.id_usuario) {
+                if (!proyecto) {
+                    throw new common_1.ForbiddenException('El proyecto especificado no existe');
+                }
+                let organizacion = proyecto.organizacion;
+                if (!organizacion && proyecto.id_organizacion) {
+                    organizacion = await this.orgRepo.findOne({
+                        where: { id_organizacion: proyecto.id_organizacion }
+                    });
+                }
+                if (!organizacion) {
+                    console.error(`[RolService] No se encontró la organización para el proyecto ${dto.id_proyecto}. id_organizacion del proyecto: ${proyecto.id_organizacion}`);
+                    throw new common_1.ForbiddenException('No se pudo verificar la organización del proyecto');
+                }
+                const organizacionUserId = Number(organizacion.id_usuario);
+                const authenticatedUserId = Number(userId);
+                if (organizacionUserId !== authenticatedUserId) {
+                    console.error(`[RolService] Permiso denegado. Usuario autenticado: ${authenticatedUserId}, Usuario de la organización: ${organizacionUserId}, Proyecto: ${dto.id_proyecto}`);
                     throw new common_1.ForbiddenException('No tienes permiso para crear roles para este proyecto');
                 }
             }
@@ -268,6 +299,28 @@ let RolService = class RolService {
         }
         return this.repo.findOne({ where });
     }
+    async getPermisos(id) {
+        const rol = await this.findOne(id);
+        return this.repo.findOne({
+            where: { id_rol: id },
+            relations: ['permisos']
+        }).then(r => (r === null || r === void 0 ? void 0 : r.permisos) || []);
+    }
+    async updatePermisos(id, permisosIds, user) {
+        const rol = await this.findOne(id);
+        if (rol.tipo_rol !== 'organizacion') {
+            throw new common_1.BadRequestException('Solo los roles de organización pueden tener permisos');
+        }
+        await this.validateUpdatePermissions(rol, user);
+        const permisos = await this.permisoRepo.find({
+            where: { id_permiso: (0, typeorm_2.In)(permisosIds) }
+        });
+        if (permisos.length !== permisosIds.length) {
+            throw new common_1.BadRequestException('Algunos permisos no existen');
+        }
+        rol.permisos = permisos;
+        return this.repo.save(rol);
+    }
 };
 exports.RolService = RolService;
 exports.RolService = RolService = __decorate([
@@ -276,7 +329,9 @@ exports.RolService = RolService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(organizacion_entity_1.Organizacion)),
     __param(2, (0, typeorm_1.InjectRepository)(proyecto_entity_1.Proyecto)),
     __param(3, (0, typeorm_1.InjectRepository)(asignacion_entity_1.Asignacion)),
+    __param(4, (0, typeorm_1.InjectRepository)(permiso_entity_1.Permiso)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

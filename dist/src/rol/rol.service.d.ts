@@ -6,19 +6,20 @@ import { Organizacion } from '../organizacion/organizacion.entity';
 import { Proyecto } from '../proyecto/proyecto.entity';
 import { Usuario } from '../users/user.entity';
 import { Asignacion } from '../asignacion/asignacion.entity';
+import { Permiso } from '../permiso/permiso.entity';
 export declare class RolService {
     private readonly repo;
     private readonly orgRepo;
     private readonly proyectoRepo;
     private readonly asignacionRepo;
-    constructor(repo: Repository<Rol>, orgRepo: Repository<Organizacion>, proyectoRepo: Repository<Proyecto>, asignacionRepo: Repository<Asignacion>);
+    private readonly permisoRepo;
+    constructor(repo: Repository<Rol>, orgRepo: Repository<Organizacion>, proyectoRepo: Repository<Proyecto>, asignacionRepo: Repository<Asignacion>, permisoRepo: Repository<Permiso>);
     create(dto: CreateRolDto, user: Usuario): Promise<Rol>;
     findAll(filters?: {
         tipo_rol?: string;
         id_organizacion?: number;
         id_proyecto?: number;
     }): Promise<Rol[]>;
-    findSystemRoles(): Promise<Rol[]>;
     findByOrganization(id_organizacion: number): Promise<Rol[]>;
     findByProject(id_proyecto: number): Promise<Rol[]>;
     findOne(id: number): Promise<Rol>;
@@ -31,4 +32,6 @@ export declare class RolService {
     private validateUpdatePermissions;
     private validateDeletePermissions;
     private findExistingRol;
+    getPermisos(id: number): Promise<Permiso[]>;
+    updatePermisos(id: number, permisosIds: number[], user: Usuario): Promise<Rol>;
 }

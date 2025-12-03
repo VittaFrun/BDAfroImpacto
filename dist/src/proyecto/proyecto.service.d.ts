@@ -13,6 +13,9 @@ import { Asignacion } from '../asignacion/asignacion.entity';
 import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
 import { HorasVoluntariadas } from '../horas-voluntariadas/horas-voluntariadas.entity';
+import { Estado } from '../estado/estado.entity';
+import { NotificacionService } from '../notificacion/notificacion.service';
+import { SolicitudInscripcion } from '../solicitud-inscripcion/solicitud-inscripcion.entity';
 export declare class ProyectoService {
     private readonly repo;
     private readonly orgRepo;
@@ -23,11 +26,17 @@ export declare class ProyectoService {
     private readonly voluntarioRepo;
     private readonly rolRepo;
     private readonly horasRepo;
-    constructor(repo: Repository<Proyecto>, orgRepo: Repository<Organizacion>, faseRepo: Repository<Fase>, tareaRepo: Repository<Tarea>, beneficioRepo: Repository<ProyectoBeneficio>, asignacionRepo: Repository<Asignacion>, voluntarioRepo: Repository<Voluntario>, rolRepo: Repository<Rol>, horasRepo: Repository<HorasVoluntariadas>);
+    private readonly estadoRepo;
+    private readonly solicitudRepo;
+    private readonly notificacionService;
+    constructor(repo: Repository<Proyecto>, orgRepo: Repository<Organizacion>, faseRepo: Repository<Fase>, tareaRepo: Repository<Tarea>, beneficioRepo: Repository<ProyectoBeneficio>, asignacionRepo: Repository<Asignacion>, voluntarioRepo: Repository<Voluntario>, rolRepo: Repository<Rol>, horasRepo: Repository<HorasVoluntariadas>, estadoRepo: Repository<Estado>, solicitudRepo: Repository<SolicitudInscripcion>, notificacionService: NotificacionService);
     create(dto: CreateProyectoDto, user: Usuario): Promise<Proyecto>;
+    private validateImageUrl;
     findAll(user: Usuario): Promise<Proyecto[] | {
         rolesAsignados: any;
         roles: any;
+        tieneAsignaciones: any;
+        tieneSolicitudAprobada: any;
         id_proyecto: number;
         nombre: string;
         descripcion: string;
@@ -37,12 +46,13 @@ export declare class ProyectoService {
         fecha_inicio: Date;
         fecha_fin: Date;
         imagen_principal: string;
+        banner: string;
         documento: string;
         presupuesto_total: number;
         es_publico: boolean;
         requisitos: string;
         id_estado: number;
-        estado: import("../estado/estado.entity").Estado;
+        estado: Estado;
         id_organizacion: number;
         organizacion: Organizacion;
         creado_en: Date;
@@ -55,7 +65,7 @@ export declare class ProyectoService {
         horasVoluntariadas: HorasVoluntariadas[];
         certificados: import("../certificado/certificado.entity").Certificado[];
         beneficio: ProyectoBeneficio;
-        solicitudes: import("../solicitud-inscripcion/solicitud-inscripcion.entity").SolicitudInscripcion[];
+        solicitudes: SolicitudInscripcion[];
         formularios: import("../formulario-inscripcion/formulario-inscripcion.entity").FormularioInscripcion[];
     }[]>;
     findOne(id: number): Promise<Proyecto>;
@@ -64,6 +74,10 @@ export declare class ProyectoService {
     remove(id: number, user: Usuario): Promise<Proyecto>;
     addFase(proyectoId: number, dto: CreateFaseDto, user: Usuario): Promise<Proyecto>;
     updateFase(proyectoId: number, faseId: number, dto: Partial<CreateFaseDto>, user: Usuario): Promise<Proyecto>;
+    reorderFases(proyectoId: number, ordenes: {
+        id_fase: number;
+        orden: number;
+    }[], user: Usuario): Promise<Proyecto>;
     removeFase(proyectoId: number, faseId: number, user: Usuario): Promise<Proyecto>;
     addTarea(proyectoId: number, dto: CreateTareaDto, user: Usuario): Promise<Proyecto>;
     updateTarea(proyectoId: number, tareaId: number, dto: Partial<CreateTareaDto>, user: Usuario): Promise<Proyecto>;
@@ -71,6 +85,8 @@ export declare class ProyectoService {
     findProjectsByVoluntario(id_usuario: number): Promise<{
         rolesAsignados: any;
         roles: any;
+        tieneAsignaciones: any;
+        tieneSolicitudAprobada: any;
         id_proyecto: number;
         nombre: string;
         descripcion: string;
@@ -80,12 +96,13 @@ export declare class ProyectoService {
         fecha_inicio: Date;
         fecha_fin: Date;
         imagen_principal: string;
+        banner: string;
         documento: string;
         presupuesto_total: number;
         es_publico: boolean;
         requisitos: string;
         id_estado: number;
-        estado: import("../estado/estado.entity").Estado;
+        estado: Estado;
         id_organizacion: number;
         organizacion: Organizacion;
         creado_en: Date;
@@ -98,7 +115,7 @@ export declare class ProyectoService {
         horasVoluntariadas: HorasVoluntariadas[];
         certificados: import("../certificado/certificado.entity").Certificado[];
         beneficio: ProyectoBeneficio;
-        solicitudes: import("../solicitud-inscripcion/solicitud-inscripcion.entity").SolicitudInscripcion[];
+        solicitudes: SolicitudInscripcion[];
         formularios: import("../formulario-inscripcion/formulario-inscripcion.entity").FormularioInscripcion[];
     }[]>;
     findOneForVolunteer(id_proyecto: number, id_usuario: number): Promise<{
@@ -125,12 +142,13 @@ export declare class ProyectoService {
         fecha_inicio: Date;
         fecha_fin: Date;
         imagen_principal: string;
+        banner: string;
         documento: string;
         presupuesto_total: number;
         es_publico: boolean;
         requisitos: string;
         id_estado: number;
-        estado: import("../estado/estado.entity").Estado;
+        estado: Estado;
         id_organizacion: number;
         organizacion: Organizacion;
         creado_en: Date;
@@ -143,7 +161,7 @@ export declare class ProyectoService {
         horasVoluntariadas: HorasVoluntariadas[];
         certificados: import("../certificado/certificado.entity").Certificado[];
         beneficio: ProyectoBeneficio;
-        solicitudes: import("../solicitud-inscripcion/solicitud-inscripcion.entity").SolicitudInscripcion[];
+        solicitudes: SolicitudInscripcion[];
         formularios: import("../formulario-inscripcion/formulario-inscripcion.entity").FormularioInscripcion[];
         roles: Rol[];
     }>;

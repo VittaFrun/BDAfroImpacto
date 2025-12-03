@@ -22,6 +22,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return { id: user.id_usuario, email: user.email, rol: user.rol, tipo_usuario: user.tipo_usuario };
+    // Devolver id_usuario para mantener consistencia con la entidad Usuario
+    return { 
+      id_usuario: user.id_usuario, 
+      id: user.id_usuario, // Mantener compatibilidad con código que usa 'id'
+      email: user.email, 
+      rol: user.rol, 
+      tipo_usuario: user.tipo_usuario 
+    };
   }
 }

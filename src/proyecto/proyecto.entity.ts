@@ -43,6 +43,9 @@ export class Proyecto {
   imagen_principal: string;
 
   @Column({ length: 255, nullable: true })
+  banner: string;
+
+  @Column({ length: 255, nullable: true })
   documento: string;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'presupuesto_total' })

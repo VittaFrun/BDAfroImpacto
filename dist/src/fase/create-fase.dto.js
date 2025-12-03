@@ -35,6 +35,16 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateFaseDto.prototype, "orden", void 0);
 __decorate([
+    (0, class_validator_1.IsDateString)({}, { message: 'La fecha de inicio debe ser una fecha válida' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateFaseDto.prototype, "fecha_inicio", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)({}, { message: 'La fecha de fin debe ser una fecha válida' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateFaseDto.prototype, "fecha_fin", void 0);
+__decorate([
     (0, class_validator_1.IsNumber)({}, { message: 'El ID del proyecto debe ser un número válido' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => value ? parseInt(value) : undefined),

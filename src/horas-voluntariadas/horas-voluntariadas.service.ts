@@ -95,11 +95,70 @@ export class HorasVoluntariadasService {
       }
     }
 
+    // Validar límites de horas
+    const fechaRegistro = new Date(dto.fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaRegistro.setHours(0, 0, 0, 0);
+
+    // Validar que la fecha no sea futura
+    if (fechaRegistro > hoy) {
+      throw new BadRequestException('No se pueden registrar horas para fechas futuras');
+    }
+
+    // Validar que las horas sean positivas
+    if (dto.horas_trabajadas <= 0) {
+      throw new BadRequestException('Las horas trabajadas deben ser mayores a 0');
+    }
+
+    // Validar que las horas no excedan 24 horas por día
+    if (dto.horas_trabajadas > 24) {
+      throw new BadRequestException('No se pueden registrar más de 24 horas en un día');
+    }
+
+    // Validar límite razonable (máximo 12 horas por día recomendado, pero permitir hasta 16 con advertencia)
+    if (dto.horas_trabajadas > 16) {
+      throw new BadRequestException(
+        'Se recomienda un máximo de 16 horas por día por razones de seguridad. Si necesitas registrar más, contacta a la organización.'
+      );
+    }
+
+    // Advertencia para horas entre 12 y 16 (permitir pero advertir)
+    if (dto.horas_trabajadas > 12 && dto.horas_trabajadas <= 16) {
+      // Esto se puede manejar con un warning en el frontend, aquí solo validamos
+    }
+
+    // Validar límite de horas por día para el voluntario en esta fecha
+    const horasDelDia = await this.repo.find({
+      where: {
+        id_voluntario: voluntario.id_voluntario,
+        fecha: fechaRegistro
+      }
+    });
+
+    const totalHorasDelDia = horasDelDia.reduce(
+      (sum, h) => sum + parseFloat(h.horas_trabajadas.toString()),
+      0
+    );
+
+    const nuevoTotal = totalHorasDelDia + dto.horas_trabajadas;
+    
+    if (nuevoTotal > 24) {
+      throw new BadRequestException(
+        `Ya has registrado ${totalHorasDelDia.toFixed(2)} horas para esta fecha. El total (${nuevoTotal.toFixed(2)} horas) no puede exceder 24 horas por día.`
+      );
+    }
+
+    // Advertencia si el total supera 16 horas
+    if (nuevoTotal > 16) {
+      // Se puede agregar un campo de advertencia en la respuesta, pero permitir el registro
+    }
+
     const horas = this.repo.create({
       id_voluntario: voluntario.id_voluntario,
       id_proyecto: dto.id_proyecto,
       id_tarea: dto.id_tarea || null,
-      fecha: new Date(dto.fecha),
+      fecha: fechaRegistro,
       horas_trabajadas: dto.horas_trabajadas,
       descripcion: dto.descripcion || null,
       verificada: false

@@ -21,6 +21,7 @@ export declare class Proyecto {
     fecha_inicio: Date;
     fecha_fin: Date;
     imagen_principal: string;
+    banner: string;
     documento: string;
     presupuesto_total: number;
     es_publico: boolean;

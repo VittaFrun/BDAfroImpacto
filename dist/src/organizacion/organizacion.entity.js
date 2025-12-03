@@ -73,6 +73,10 @@ __decorate([
     __metadata("design:type", String)
 ], Organizacion.prototype, "logo", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ length: 255, nullable: true }),
+    __metadata("design:type", String)
+], Organizacion.prototype, "banner", void 0);
+__decorate([
     (0, typeorm_1.Column)({ length: 7, name: 'color_primario', nullable: true }),
     __metadata("design:type", String)
 ], Organizacion.prototype, "color_primario", void 0);

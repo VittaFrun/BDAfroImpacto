@@ -34,12 +34,6 @@ export class RolController {
     return this.service.findAll(Object.keys(filters).length > 0 ? filters : undefined);
   }
 
-  @Get('sistema')
-  @Roles('admin', 'organizacion', 'voluntario')
-  findSystemRoles() {
-    return this.service.findSystemRoles();
-  }
-
   @Get('organizacion/:id')
   @Roles('admin', 'organizacion', 'voluntario')
   findByOrganization(@Param('id', ParseIntPipe) id: number) {
@@ -72,5 +66,21 @@ export class RolController {
   @Roles('admin', 'organizacion')
   remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: Usuario) {
     return this.service.remove(id, user);
+  }
+
+  @Get(':id/permisos')
+  @Roles('admin', 'organizacion')
+  getPermisos(@Param('id', ParseIntPipe) id: number) {
+    return this.service.getPermisos(id);
+  }
+
+  @Patch(':id/permisos')
+  @Roles('admin', 'organizacion')
+  updatePermisos(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { permisos: number[] },
+    @GetUser() user: Usuario
+  ) {
+    return this.service.updatePermisos(id, body.permisos || [], user);
   }
 }

@@ -20,42 +20,49 @@ __decorate([
     __metadata("design:type", Number)
 ], Reporte.prototype, "id_reporte", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 50 }),
+    (0, typeorm_1.Column)({ length: 100 }),
     __metadata("design:type", String)
 ], Reporte.prototype, "tipo", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 20, default: 'PDF' }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['PDF', 'Excel', 'CSV'],
+        default: 'PDF'
+    }),
     __metadata("design:type", String)
 ], Reporte.prototype, "formato", void 0);
 __decorate([
-    (0, typeorm_1.Column)('date'),
-    __metadata("design:type", Date)
-], Reporte.prototype, "fecha", void 0);
-__decorate([
-    (0, typeorm_1.Column)('text'),
-    __metadata("design:type", String)
-], Reporte.prototype, "contenido", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ length: 20, default: 'pendiente' }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['pendiente', 'generando', 'listo', 'error'],
+        default: 'pendiente'
+    }),
     __metadata("design:type", String)
 ], Reporte.prototype, "estado", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'incluir_graficos', default: true }),
-    __metadata("design:type", Boolean)
-], Reporte.prototype, "incluir_graficos", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: 0 }),
-    __metadata("design:type", Number)
-], Reporte.prototype, "descargas", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'id_proyecto' }),
     __metadata("design:type", Number)
 ], Reporte.prototype, "id_proyecto", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => proyecto_entity_1.Proyecto, (proyecto) => proyecto.reportes),
-    (0, typeorm_1.JoinColumn)({ name: 'id_proyecto' }),
-    __metadata("design:type", proyecto_entity_1.Proyecto)
-], Reporte.prototype, "proyecto", void 0);
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Reporte.prototype, "contenido", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false, name: 'incluir_graficos' }),
+    __metadata("design:type", Boolean)
+], Reporte.prototype, "incluir_graficos", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], Reporte.prototype, "descargas", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true, name: 'fecha_inicio' }),
+    __metadata("design:type", Date)
+], Reporte.prototype, "fecha_inicio", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'datetime', nullable: true, name: 'fecha_fin' }),
+    __metadata("design:type", Date)
+], Reporte.prototype, "fecha_fin", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ name: 'creado_en' }),
     __metadata("design:type", Date)
@@ -64,7 +71,12 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)({ name: 'actualizado_en' }),
     __metadata("design:type", Date)
 ], Reporte.prototype, "actualizado_en", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => proyecto_entity_1.Proyecto, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'id_proyecto' }),
+    __metadata("design:type", proyecto_entity_1.Proyecto)
+], Reporte.prototype, "proyecto", void 0);
 exports.Reporte = Reporte = __decorate([
-    (0, typeorm_1.Entity)({ name: 'reporte' })
+    (0, typeorm_1.Entity)('reporte')
 ], Reporte);
 //# sourceMappingURL=reporte.entity.js.map

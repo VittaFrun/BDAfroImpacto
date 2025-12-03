@@ -22,21 +22,60 @@ const proyecto_entity_1 = require("../proyecto/proyecto.entity");
 const organizacion_entity_1 = require("../organizacion/organizacion.entity");
 const voluntario_entity_1 = require("../voluntario/voluntario.entity");
 const asignacion_entity_1 = require("../asignacion/asignacion.entity");
+const horas_voluntariadas_entity_1 = require("../horas-voluntariadas/horas-voluntariadas.entity");
 let TareaService = class TareaService {
-    constructor(repo, faseRepo, proyectoRepo, orgRepo, voluntarioRepo, asignacionRepo) {
+    constructor(repo, faseRepo, proyectoRepo, orgRepo, voluntarioRepo, asignacionRepo, horasRepo) {
         this.repo = repo;
         this.faseRepo = faseRepo;
         this.proyectoRepo = proyectoRepo;
         this.orgRepo = orgRepo;
         this.voluntarioRepo = voluntarioRepo;
         this.asignacionRepo = asignacionRepo;
+        this.horasRepo = horasRepo;
     }
     async create(dto, user) {
-        const fase = await this.faseRepo.findOne({ where: { id_fase: dto.id_fase } });
+        const fase = await this.faseRepo.findOne({
+            where: { id_fase: dto.id_fase },
+            relations: ['proyecto']
+        });
         if (!fase) {
             throw new common_1.NotFoundException(`Fase con ID ${dto.id_fase} no encontrada`);
         }
         await this.checkOrganizacionOwnership(fase.id_proyecto, user);
+        if (!dto.fecha_inicio || !dto.fecha_fin) {
+            throw new common_1.BadRequestException('Las fechas de inicio y fin son requeridas para la tarea');
+        }
+        const fechaInicio = new Date(dto.fecha_inicio);
+        const fechaFin = new Date(dto.fecha_fin);
+        fechaInicio.setHours(0, 0, 0, 0);
+        fechaFin.setHours(0, 0, 0, 0);
+        if (fechaInicio > fechaFin) {
+            throw new common_1.BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin');
+        }
+        if (fase.fecha_inicio && fase.fecha_fin) {
+            const faseInicio = new Date(fase.fecha_inicio);
+            const faseFin = new Date(fase.fecha_fin);
+            faseInicio.setHours(0, 0, 0, 0);
+            faseFin.setHours(0, 0, 0, 0);
+            if (fechaInicio < faseInicio) {
+                throw new common_1.BadRequestException(`La fecha de inicio de la tarea (${dto.fecha_inicio}) no puede ser anterior al inicio de la fase (${fase.fecha_inicio})`);
+            }
+            if (fechaFin > faseFin) {
+                throw new common_1.BadRequestException(`La fecha de fin de la tarea (${dto.fecha_fin}) no puede ser posterior al fin de la fase (${fase.fecha_fin})`);
+            }
+        }
+        if (fase.proyecto) {
+            const proyectoInicio = new Date(fase.proyecto.fecha_inicio);
+            const proyectoFin = new Date(fase.proyecto.fecha_fin);
+            proyectoInicio.setHours(0, 0, 0, 0);
+            proyectoFin.setHours(0, 0, 0, 0);
+            if (fechaInicio < proyectoInicio) {
+                throw new common_1.BadRequestException(`La fecha de inicio de la tarea (${dto.fecha_inicio}) no puede ser anterior al inicio del proyecto (${fase.proyecto.fecha_inicio})`);
+            }
+            if (fechaFin > proyectoFin) {
+                throw new common_1.BadRequestException(`La fecha de fin de la tarea (${dto.fecha_fin}) no puede ser posterior al fin del proyecto (${fase.proyecto.fecha_fin})`);
+            }
+        }
         const tarea = this.repo.create(dto);
         return this.repo.save(tarea);
     }
@@ -46,11 +85,17 @@ let TareaService = class TareaService {
             .where('fase.id_proyecto = :idProyecto', { idProyecto })
             .getMany();
     }
-    findOne(id) {
-        return this.repo.findOne({ where: { id_tarea: id } });
+    async findOne(id) {
+        return this.repo.findOne({
+            where: { id_tarea: id },
+            relations: ['fase', 'fase.proyecto']
+        });
     }
     async update(id, dto, user) {
-        const tarea = await this.findOne(id);
+        const tarea = await this.repo.findOne({
+            where: { id_tarea: id },
+            relations: ['fase', 'fase.proyecto']
+        });
         if (!tarea) {
             throw new common_1.NotFoundException(`Tarea con ID ${id} no encontrada`);
         }
@@ -75,7 +120,48 @@ let TareaService = class TareaService {
         else if (user.tipo_usuario !== 'admin') {
             throw new common_1.ForbiddenException('No tienes permiso para actualizar esta tarea.');
         }
-        return this.repo.update(id, dto);
+        if (dto.fecha_inicio || dto.fecha_fin) {
+            const fechaInicio = dto.fecha_inicio
+                ? new Date(dto.fecha_inicio)
+                : (tarea.fecha_inicio ? new Date(tarea.fecha_inicio) : null);
+            const fechaFin = dto.fecha_fin
+                ? new Date(dto.fecha_fin)
+                : (tarea.fecha_fin ? new Date(tarea.fecha_fin) : null);
+            if (!fechaInicio || !fechaFin) {
+                throw new common_1.BadRequestException('Ambas fechas (inicio y fin) son requeridas');
+            }
+            fechaInicio.setHours(0, 0, 0, 0);
+            fechaFin.setHours(0, 0, 0, 0);
+            if (fechaInicio > fechaFin) {
+                throw new common_1.BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin');
+            }
+            if (tarea.fase.fecha_inicio && tarea.fase.fecha_fin) {
+                const faseInicio = new Date(tarea.fase.fecha_inicio);
+                const faseFin = new Date(tarea.fase.fecha_fin);
+                faseInicio.setHours(0, 0, 0, 0);
+                faseFin.setHours(0, 0, 0, 0);
+                if (fechaInicio < faseInicio) {
+                    throw new common_1.BadRequestException(`La fecha de inicio de la tarea no puede ser anterior al inicio de la fase (${tarea.fase.fecha_inicio})`);
+                }
+                if (fechaFin > faseFin) {
+                    throw new common_1.BadRequestException(`La fecha de fin de la tarea no puede ser posterior al fin de la fase (${tarea.fase.fecha_fin})`);
+                }
+            }
+            if (tarea.fase.proyecto) {
+                const proyectoInicio = new Date(tarea.fase.proyecto.fecha_inicio);
+                const proyectoFin = new Date(tarea.fase.proyecto.fecha_fin);
+                proyectoInicio.setHours(0, 0, 0, 0);
+                proyectoFin.setHours(0, 0, 0, 0);
+                if (fechaInicio < proyectoInicio) {
+                    throw new common_1.BadRequestException(`La fecha de inicio de la tarea no puede ser anterior al inicio del proyecto (${tarea.fase.proyecto.fecha_inicio})`);
+                }
+                if (fechaFin > proyectoFin) {
+                    throw new common_1.BadRequestException(`La fecha de fin de la tarea no puede ser posterior al fin del proyecto (${tarea.fase.proyecto.fecha_fin})`);
+                }
+            }
+        }
+        await this.repo.update(id, dto);
+        return this.findOne(id);
     }
     async remove(id, user) {
         const tarea = await this.findOne(id);
@@ -83,6 +169,18 @@ let TareaService = class TareaService {
             throw new common_1.NotFoundException(`Tarea con ID ${id} no encontrada`);
         }
         await this.checkOrganizacionOwnership(tarea.fase.id_proyecto, user);
+        const asignaciones = await this.asignacionRepo.find({
+            where: { id_tarea: id }
+        });
+        if (asignaciones.length > 0) {
+            throw new common_1.BadRequestException(`No se puede eliminar la tarea porque tiene ${asignaciones.length} asignación(es) activa(s). Por favor, elimina primero todas las asignaciones.`);
+        }
+        const horasVoluntariadas = await this.horasRepo.find({
+            where: { id_tarea: id }
+        });
+        if (horasVoluntariadas.length > 0) {
+            throw new common_1.BadRequestException(`No se puede eliminar la tarea porque tiene ${horasVoluntariadas.length} registro(s) de horas voluntariadas. Por favor, elimina primero todos los registros de horas.`);
+        }
         return this.repo.remove(tarea);
     }
     async checkOrganizacionOwnership(id_proyecto, user) {
@@ -107,7 +205,9 @@ exports.TareaService = TareaService = __decorate([
     __param(3, (0, typeorm_1.InjectRepository)(organizacion_entity_1.Organizacion)),
     __param(4, (0, typeorm_1.InjectRepository)(voluntario_entity_1.Voluntario)),
     __param(5, (0, typeorm_1.InjectRepository)(asignacion_entity_1.Asignacion)),
+    __param(6, (0, typeorm_1.InjectRepository)(horas_voluntariadas_entity_1.HorasVoluntariadas)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

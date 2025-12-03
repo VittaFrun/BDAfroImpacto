@@ -10,8 +10,8 @@ export class CreateRolDto {
   @IsOptional()
   descripcion?: string;
 
-  @IsEnum(['sistema', 'organizacion', 'proyecto'])
-  tipo_rol: 'sistema' | 'organizacion' | 'proyecto';
+  @IsEnum(['organizacion', 'proyecto'])
+  tipo_rol: 'organizacion' | 'proyecto';
 
   @IsOptional()
   @IsNumber({}, { message: 'id_organizacion debe ser un número' })
@@ -39,4 +39,18 @@ export class CreateRolDto {
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true' || value === 1)
   activo?: boolean;
+
+  @IsString()
+  @IsOptional()
+  @Transform(({ value }) => {
+    // Validar formato hex si se proporciona
+    if (value && typeof value === 'string') {
+      const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+      if (hexRegex.test(value)) {
+        return value.toUpperCase();
+      }
+    }
+    return value || '#2196F3'; // Color por defecto
+  })
+  color?: string;
 }

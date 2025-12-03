@@ -47,6 +47,9 @@ export class Organizacion {
   @Column({ length: 255, nullable: true })
   logo: string;
 
+  @Column({ length: 255, nullable: true })
+  banner: string;
+
   @Column({ length: 7, name: 'color_primario', nullable: true })
   color_primario: string;
 

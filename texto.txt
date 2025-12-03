@@ -1,11 +1,103 @@
-C:\Users\barba\OneDrive\Escritorio\Proyectos\AfroImpactoBD>npm run start dev
-
-> start
-> nest start dev
-
-tsconfig.json:13:27 - error TS5103: Invalid value for '--ignoreDeprecations'.
-
-13     "ignoreDeprecations": "6.0",
-                             ~~~~~
-
-Found 1 error(s).
+ProjectDetailView.vue:1229 Creando rol con datos: {name: 'Voluntario', description: 'xxxxxxxxxxx', tipo_rol: 'proyecto', id_organizacion: null, id_proyecto: 8, …}
+roleStore.js:128 Enviando datos de rol: {nombre: 'Voluntario', descripcion: 'xxxxxxxxxxx', tipo_rol: 'proyecto', activo: true, color: '#F57C00', …}
+roleStore.js:130  POST http://localhost:3000/roles 403 (Forbidden)
+dispatchXhrRequest @ axios.js?v=3aaab13c:1683
+xhr @ axios.js?v=3aaab13c:1560
+dispatchRequest @ axios.js?v=3aaab13c:2085
+Promise.then
+_request @ axios.js?v=3aaab13c:2288
+request @ axios.js?v=3aaab13c:2197
+httpMethod @ axios.js?v=3aaab13c:2334
+wrap @ axios.js?v=3aaab13c:8
+addRole @ roleStore.js:130
+wrappedAction @ pinia.js?v=3aaab13c:5505
+store.<computed> @ pinia.js?v=3aaab13c:5199
+saveRole @ ProjectDetailView.vue:1230
+handleRoleSave @ ProjectDetailView.vue:1300
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleSave @ RoleDialog.vue:404
+await in handleSave
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleClick @ ModernButton.vue:92
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:11569
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2505
+invoker @ chunk-A2GZF6RP.js?v=3aaab13c:11540
+axios.js:87 API Error: {type: 'permission', url: '/roles', method: 'post', status: 403, message: 'No tienes permiso para crear roles para este proyecto', …}
+(anonymous) @ axios.js:87
+Promise.then
+_request @ axios.js?v=3aaab13c:2288
+request @ axios.js?v=3aaab13c:2197
+httpMethod @ axios.js?v=3aaab13c:2334
+wrap @ axios.js?v=3aaab13c:8
+addRole @ roleStore.js:130
+wrappedAction @ pinia.js?v=3aaab13c:5505
+store.<computed> @ pinia.js?v=3aaab13c:5199
+saveRole @ ProjectDetailView.vue:1230
+handleRoleSave @ ProjectDetailView.vue:1300
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleSave @ RoleDialog.vue:404
+await in handleSave
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleClick @ ModernButton.vue:92
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:11569
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2505
+invoker @ chunk-A2GZF6RP.js?v=3aaab13c:11540
+roleStore.js:144 Error adding role: {message: 'Request failed with status code 403', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+addRole @ roleStore.js:144
+await in addRole
+wrappedAction @ pinia.js?v=3aaab13c:5505
+store.<computed> @ pinia.js?v=3aaab13c:5199
+saveRole @ ProjectDetailView.vue:1230
+handleRoleSave @ ProjectDetailView.vue:1300
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleSave @ RoleDialog.vue:404
+await in handleSave
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleClick @ ModernButton.vue:92
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:11569
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2505
+invoker @ chunk-A2GZF6RP.js?v=3aaab13c:11540
+ProjectDetailView.vue:1240 Error saving role: {message: 'Request failed with status code 403', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+saveRole @ ProjectDetailView.vue:1240
+await in saveRole
+handleRoleSave @ ProjectDetailView.vue:1300
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleSave @ RoleDialog.vue:404
+await in handleSave
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+emit @ chunk-A2GZF6RP.js?v=3aaab13c:7657
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:9185
+handleClick @ ModernButton.vue:92
+(anonymous) @ chunk-A2GZF6RP.js?v=3aaab13c:11569
+callWithErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2487
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2494
+callWithAsyncErrorHandling @ chunk-A2GZF6RP.js?v=3aaab13c:2505
+invoker @ chunk-A2GZF6RP.js?v=3aaab13c:11540

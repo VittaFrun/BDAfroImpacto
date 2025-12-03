@@ -37,6 +37,18 @@ const solicitud_inscripcion_module_1 = require("./solicitud-inscripcion/solicitu
 const formulario_inscripcion_module_1 = require("./formulario-inscripcion/formulario-inscripcion.module");
 const documento_solicitud_module_1 = require("./documento-solicitud/documento-solicitud.module");
 const horas_voluntariadas_module_1 = require("./horas-voluntariadas/horas-voluntariadas.module");
+const eliminacion_historial_module_1 = require("./eliminacion-historial/eliminacion-historial.module");
+const notificacion_module_1 = require("./notificacion/notificacion.module");
+const certificado_module_1 = require("./certificado/certificado.module");
+const logro_module_1 = require("./logro/logro.module");
+const voluntario_logro_module_1 = require("./voluntario-logro/voluntario-logro.module");
+const mensaje_module_1 = require("./mensaje/mensaje.module");
+const organizacion_miembro_module_1 = require("./organizacion-miembro/organizacion-miembro.module");
+const comentario_module_1 = require("./comentario/comentario.module");
+const analytics_module_1 = require("./analytics/analytics.module");
+const historial_cambios_module_1 = require("./historial-cambios/historial-cambios.module");
+const bull_1 = require("@nestjs/bull");
+const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -46,6 +58,13 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
             }),
+            bull_1.BullModule.forRoot({
+                redis: {
+                    host: process.env.REDIS_HOST || 'localhost',
+                    port: parseInt(process.env.REDIS_PORT) || 6379,
+                },
+            }),
+            schedule_1.ScheduleModule.forRoot(),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
@@ -87,6 +106,16 @@ exports.AppModule = AppModule = __decorate([
             solicitud_inscripcion_module_1.SolicitudInscripcionModule,
             formulario_inscripcion_module_1.FormularioInscripcionModule,
             horas_voluntariadas_module_1.HorasVoluntariadasModule,
+            eliminacion_historial_module_1.EliminacionHistorialModule,
+            notificacion_module_1.NotificacionModule,
+            certificado_module_1.CertificadoModule,
+            logro_module_1.LogroModule,
+            voluntario_logro_module_1.VoluntarioLogroModule,
+            mensaje_module_1.MensajeModule,
+            organizacion_miembro_module_1.OrganizacionMiembroModule,
+            comentario_module_1.ComentarioModule,
+            analytics_module_1.AnalyticsModule,
+            historial_cambios_module_1.HistorialCambiosModule,
         ],
     })
 ], AppModule);

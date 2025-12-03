@@ -63,10 +63,29 @@ export class AsignacionService {
     const saved = await this.repo.save(asignacion);
     
     // Retornar con relaciones
-    return this.repo.findOne({
+    const asignacionCompleta = await this.repo.findOne({
       where: { id_asignacion: saved.id_asignacion },
-      relations: ['rol', 'voluntario', 'tarea']
+      relations: ['rol', 'voluntario', 'voluntario.usuario', 'tarea']
     });
+
+    // Notificar al voluntario sobre la nueva asignación
+    if (asignacionCompleta?.voluntario?.usuario && asignacionCompleta?.tarea && asignacionCompleta?.rol) {
+      try {
+        await this.notificacionService.notificarNuevaAsignacion(
+          asignacionCompleta.voluntario.id_voluntario,
+          proyecto.id_proyecto,
+          asignacionCompleta.tarea.id_tarea,
+          asignacionCompleta.tarea.descripcion || 'Tarea sin nombre',
+          proyecto.nombre || 'Proyecto sin nombre',
+          asignacionCompleta.rol.nombre || asignacionCompleta.rol.nombre || 'Rol sin nombre'
+        );
+      } catch (error) {
+        // No fallar la asignación si la notificación falla
+        console.error('Error al notificar nueva asignación:', error);
+      }
+    }
+    
+    return asignacionCompleta;
   }
 
   async validateRolForProject(id_rol: number, id_proyecto: number) {
@@ -89,9 +108,8 @@ export class AsignacionService {
       throw new NotFoundException(`Proyecto con ID ${id_proyecto} no encontrado`);
     }
 
-    // El rol debe ser: sistema, de la organización del proyecto, o del proyecto mismo
+    // El rol debe ser: de la organización del proyecto, o del proyecto mismo
     const isValid = 
-      rol.tipo_rol === 'sistema' ||
       (rol.tipo_rol === 'organizacion' && rol.id_organizacion === proyecto.id_organizacion) ||
       (rol.tipo_rol === 'proyecto' && rol.id_proyecto === id_proyecto);
 
@@ -236,7 +254,7 @@ export class AsignacionService {
         id_asignacion: a.id_asignacion,
         tarea: {
           id_tarea: a.tarea.id_tarea,
-          nombre: a.tarea.nombre,
+          nombre: a.tarea.descripcion,
           estado: a.tarea.estado?.nombre || 'Sin estado'
         },
         rol: {

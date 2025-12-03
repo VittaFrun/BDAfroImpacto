@@ -12,12 +12,14 @@ const typeorm_1 = require("@nestjs/typeorm");
 const fase_entity_1 = require("./fase.entity");
 const fase_service_1 = require("./fase.service");
 const fase_controller_1 = require("./fase.controller");
+const proyecto_entity_1 = require("../proyecto/proyecto.entity");
+const tarea_entity_1 = require("../tarea/tarea.entity");
 let FaseModule = class FaseModule {
 };
 exports.FaseModule = FaseModule;
 exports.FaseModule = FaseModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([fase_entity_1.Fase])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([fase_entity_1.Fase, proyecto_entity_1.Proyecto, tarea_entity_1.Tarea])],
         controllers: [fase_controller_1.FaseController],
         providers: [fase_service_1.FaseService],
     })

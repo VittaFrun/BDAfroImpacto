@@ -17,6 +17,7 @@ export declare class Organizacion {
     areas_enfoque: string;
     mision_vision: string;
     logo: string;
+    banner: string;
     color_primario: string;
     color_secundario: string;
     tema: string;

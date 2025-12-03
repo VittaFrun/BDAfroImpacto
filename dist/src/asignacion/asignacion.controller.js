@@ -21,9 +21,11 @@ const roles_guard_1 = require("../common/guards/roles.guard");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const get_user_decorator_1 = require("../common/decorators/get-user.decorator");
 const user_entity_1 = require("../users/user.entity");
+const smart_assignment_service_1 = require("./smart-assignment.service");
 let AsignacionController = class AsignacionController {
-    constructor(service) {
+    constructor(service, smartAssignmentService) {
         this.service = service;
+        this.smartAssignmentService = smartAssignmentService;
     }
     create(dto, user) {
         return this.service.create(dto, user);
@@ -39,6 +41,15 @@ let AsignacionController = class AsignacionController {
     }
     remove(id, user) {
         return this.service.remove(+id, user);
+    }
+    checkVolunteerAssignments(idVoluntario) {
+        return this.service.getVolunteerAssignments(+idVoluntario);
+    }
+    checkVolunteerAssignmentsInProject(idVoluntario, idProyecto) {
+        return this.service.checkVolunteerAssignmentsInProject(+idVoluntario, +idProyecto);
+    }
+    async generateSmartSuggestions(request, user) {
+        return await this.smartAssignmentService.generateSmartSuggestions(request);
     }
 };
 exports.AsignacionController = AsignacionController;
@@ -85,9 +96,36 @@ __decorate([
     __metadata("design:paramtypes", [String, user_entity_1.Usuario]),
     __metadata("design:returntype", void 0)
 ], AsignacionController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)('voluntario/:idVoluntario/verificar'),
+    (0, roles_decorator_1.Roles)('organizacion', 'admin'),
+    __param(0, (0, common_1.Param)('idVoluntario')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AsignacionController.prototype, "checkVolunteerAssignments", null);
+__decorate([
+    (0, common_1.Get)('voluntario/:idVoluntario/proyecto/:idProyecto/verificar'),
+    (0, roles_decorator_1.Roles)('organizacion', 'admin'),
+    __param(0, (0, common_1.Param)('idVoluntario')),
+    __param(1, (0, common_1.Param)('idProyecto')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], AsignacionController.prototype, "checkVolunteerAssignmentsInProject", null);
+__decorate([
+    (0, common_1.Post)('smart-suggestions'),
+    (0, roles_decorator_1.Roles)('organizacion', 'admin'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, user_entity_1.Usuario]),
+    __metadata("design:returntype", Promise)
+], AsignacionController.prototype, "generateSmartSuggestions", null);
 exports.AsignacionController = AsignacionController = __decorate([
     (0, common_1.Controller)('asignacion'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt'), roles_guard_1.RolesGuard),
-    __metadata("design:paramtypes", [asignacion_service_1.AsignacionService])
+    __metadata("design:paramtypes", [asignacion_service_1.AsignacionService,
+        smart_assignment_service_1.SmartAssignmentService])
 ], AsignacionController);
 //# sourceMappingURL=asignacion.controller.js.map

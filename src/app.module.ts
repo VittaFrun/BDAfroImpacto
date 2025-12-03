@@ -34,12 +34,29 @@ import { DocumentoSolicitudModule } from './documento-solicitud/documento-solici
 import { HorasVoluntariadasModule } from './horas-voluntariadas/horas-voluntariadas.module';
 import { EliminacionHistorialModule } from './eliminacion-historial/eliminacion-historial.module';
 import { NotificacionModule } from './notificacion/notificacion.module';
+import { CertificadoModule } from './certificado/certificado.module';
+import { LogroModule } from './logro/logro.module';
+import { VoluntarioLogroModule } from './voluntario-logro/voluntario-logro.module';
+import { MensajeModule } from './mensaje/mensaje.module';
+import { OrganizacionMiembroModule } from './organizacion-miembro/organizacion-miembro.module';
+import { ComentarioModule } from './comentario/comentario.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { HistorialCambiosModule } from './historial-cambios/historial-cambios.module';
+import { BullModule } from '@nestjs/bull';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT) || 6379,
+      },
+    }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -85,6 +102,14 @@ import { NotificacionModule } from './notificacion/notificacion.module';
     HorasVoluntariadasModule,
     EliminacionHistorialModule,
     NotificacionModule,
+    CertificadoModule,
+    LogroModule,
+    VoluntarioLogroModule,
+    MensajeModule,
+    OrganizacionMiembroModule,
+    ComentarioModule,
+    AnalyticsModule,
+    HistorialCambiosModule,
   ],
 })
 export class AppModule {}

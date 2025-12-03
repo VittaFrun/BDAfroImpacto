@@ -86,6 +86,17 @@ export class ProyectoController {
     return this.service.updateFase(+id, +phaseId, dto, user);
   }
 
+  @Put(':id/phases/reorder')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('organizacion', 'admin')
+  reorderPhases(
+    @Param('id') id: string,
+    @Body() body: { ordenes: { id_fase: number; orden: number }[] },
+    @GetUser() user: Usuario
+  ) {
+    return this.service.reorderFases(+id, body.ordenes, user);
+  }
+
   @Delete(':id/phases/:phaseId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('organizacion', 'admin')

@@ -66,6 +66,10 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ length: 255, nullable: true }),
     __metadata("design:type", String)
+], Proyecto.prototype, "banner", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 255, nullable: true }),
+    __metadata("design:type", String)
 ], Proyecto.prototype, "documento", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 12, scale: 2, default: 0, name: 'presupuesto_total' }),

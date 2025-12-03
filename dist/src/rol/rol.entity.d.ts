@@ -6,12 +6,13 @@ export declare class Rol {
     id_rol: number;
     nombre: string;
     descripcion: string;
-    tipo_rol: 'sistema' | 'organizacion' | 'proyecto';
+    tipo_rol: 'organizacion' | 'proyecto';
     id_organizacion: number | null;
     organizacion: Organizacion | null;
     id_proyecto: number | null;
     proyecto: Proyecto | null;
     activo: boolean;
+    color: string;
     creado_por: number | null;
     creador: Usuario | null;
     creado_en: Date;

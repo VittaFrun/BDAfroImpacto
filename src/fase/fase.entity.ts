@@ -16,6 +16,12 @@ export class Fase {
   @Column('int')
   orden: number;
 
+  @Column({ name: 'fecha_inicio', type: 'date', nullable: true })
+  fecha_inicio: Date;
+
+  @Column({ name: 'fecha_fin', type: 'date', nullable: true })
+  fecha_fin: Date;
+
   @Column({ name: 'id_proyecto' })
   id_proyecto: number;
 

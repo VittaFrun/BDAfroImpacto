@@ -16,6 +16,8 @@ import { Voluntario } from '../voluntario/voluntario.entity';
 import { Rol } from '../rol/rol.entity';
 import { HorasVoluntariadas } from '../horas-voluntariadas/horas-voluntariadas.entity';
 import { Estado } from '../estado/estado.entity';
+import { NotificacionService } from '../notificacion/notificacion.service';
+import { SolicitudInscripcion } from '../solicitud-inscripcion/solicitud-inscripcion.entity';
 
 @Injectable()
 export class ProyectoService {
@@ -40,27 +42,87 @@ export class ProyectoService {
     private readonly horasRepo: Repository<HorasVoluntariadas>,
     @InjectRepository(Estado)
     private readonly estadoRepo: Repository<Estado>,
+    @InjectRepository(SolicitudInscripcion)
+    private readonly solicitudRepo: Repository<SolicitudInscripcion>,
+    private readonly notificacionService: NotificacionService,
   ) {}
 
   async create(dto: CreateProyectoDto, user: Usuario) {
-    // Validar campos requeridos
+    // Validar campos requeridos con BadRequestException
     if (!dto.nombre || dto.nombre.trim() === '') {
-      throw new Error('El nombre del proyecto es requerido');
+      throw new BadRequestException('El nombre del proyecto es requerido');
     }
+    if (dto.nombre.trim().length < 3) {
+      throw new BadRequestException('El nombre del proyecto debe tener al menos 3 caracteres');
+    }
+    if (dto.nombre.trim().length > 100) {
+      throw new BadRequestException('El nombre del proyecto no puede exceder 100 caracteres');
+    }
+
     if (!dto.descripcion || dto.descripcion.trim() === '') {
-      throw new Error('La descripción del proyecto es requerida');
+      throw new BadRequestException('La descripción del proyecto es requerida');
     }
+    if (dto.descripcion.trim().length < 10) {
+      throw new BadRequestException('La descripción del proyecto debe tener al menos 10 caracteres');
+    }
+
     if (!dto.objetivo || dto.objetivo.trim() === '') {
-      throw new Error('El objetivo del proyecto es requerido');
+      throw new BadRequestException('El objetivo del proyecto es requerido');
     }
+    if (dto.objetivo.trim().length < 10) {
+      throw new BadRequestException('El objetivo del proyecto debe tener al menos 10 caracteres');
+    }
+
     if (!dto.ubicacion || dto.ubicacion.trim() === '') {
-      throw new Error('La ubicación del proyecto es requerida');
+      throw new BadRequestException('La ubicación del proyecto es requerida');
     }
+
     if (!dto.fecha_inicio) {
-      throw new Error('La fecha de inicio es requerida');
+      throw new BadRequestException('La fecha de inicio es requerida');
     }
     if (!dto.fecha_fin) {
-      throw new Error('La fecha de fin es requerida');
+      throw new BadRequestException('La fecha de fin es requerida');
+    }
+
+    // Validar fechas
+    const fechaInicio = new Date(dto.fecha_inicio);
+    const fechaFin = new Date(dto.fecha_fin);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaInicio.setHours(0, 0, 0, 0);
+    fechaFin.setHours(0, 0, 0, 0);
+
+    if (fechaInicio > fechaFin) {
+      throw new BadRequestException('La fecha de inicio debe ser anterior o igual a la fecha de fin');
+    }
+
+    // Validar que la fecha de inicio no sea muy antigua (más de 1 año)
+    const unAnoAtras = new Date();
+    unAnoAtras.setFullYear(unAnoAtras.getFullYear() - 1);
+    unAnoAtras.setHours(0, 0, 0, 0);
+    
+    if (fechaInicio < unAnoAtras) {
+      throw new BadRequestException('La fecha de inicio no puede ser anterior a hace un año');
+    }
+
+    // Validar presupuesto si se proporciona
+    if (dto.presupuesto_total !== undefined && dto.presupuesto_total !== null) {
+      if (dto.presupuesto_total < 0) {
+        throw new BadRequestException('El presupuesto no puede ser negativo');
+      }
+      if (dto.presupuesto_total > 999999999999.99) {
+        throw new BadRequestException('El presupuesto excede el límite máximo permitido');
+      }
+    }
+
+    // Validar imagen si se proporciona
+    if (dto.imagen_principal) {
+      this.validateImageUrl(dto.imagen_principal);
+    }
+
+    // Validar banner si se proporciona
+    if (dto.banner) {
+      this.validateImageUrl(dto.banner);
     }
 
     const organizacion = await this.orgRepo.findOne({ where: { id_usuario: user.id_usuario } });
@@ -71,8 +133,13 @@ export class ProyectoService {
     // Validar que el estado existe, si no usar estado por defecto (1 = Activo)
     let id_estado = dto.id_estado || 1;
     if (id_estado === 0) {
-      // Si viene 0, usar estado activo por defecto
       id_estado = 1;
+    }
+
+    // Verificar que el estado existe
+    const estado = await this.estadoRepo.findOne({ where: { id_estado } });
+    if (!estado) {
+      throw new NotFoundException(`Estado con ID ${id_estado} no encontrado`);
     }
     
     const proyecto = this.repo.create({ 
@@ -83,16 +150,61 @@ export class ProyectoService {
       fecha_inicio: dto.fecha_inicio,
       fecha_fin: dto.fecha_fin,
       imagen_principal: dto.imagen_principal || '/assets/images/background_login.png',
+      banner: dto.banner || null,
       documento: dto.documento || null,
       presupuesto_total: dto.presupuesto_total || 0,
       categoria: dto.categoria || null,
-      es_publico: dto.es_publico !== undefined ? dto.es_publico : false,
+      es_publico: dto.es_publico !== undefined ? dto.es_publico : true,
       requisitos: dto.requisitos || null,
       id_estado: id_estado,
       id_organizacion: organizacion.id_organizacion
     });
     
     return this.repo.save(proyecto);
+  }
+
+  /**
+   * Valida que una URL de imagen sea válida
+   */
+  private validateImageUrl(url: string): void {
+    if (!url || typeof url !== 'string') {
+      throw new BadRequestException('La URL de la imagen debe ser una cadena de texto válida');
+    }
+
+    // Validar formato de URL
+    try {
+      const urlObj = new URL(url);
+      const protocol = urlObj.protocol.toLowerCase();
+      
+      // Permitir http, https y rutas relativas que empiecen con /
+      if (protocol !== 'http:' && protocol !== 'https:' && !url.startsWith('/')) {
+        throw new BadRequestException('La URL de la imagen debe ser una URL válida (http/https) o una ruta relativa');
+      }
+
+      // Validar extensión de archivo si es una URL completa
+      if (protocol === 'http:' || protocol === 'https:') {
+        const pathname = urlObj.pathname.toLowerCase();
+        const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+        const hasValidExtension = validExtensions.some(ext => pathname.endsWith(ext));
+        
+        if (!hasValidExtension && !pathname.includes('data:image')) {
+          // Permitir data URLs para imágenes base64
+          if (!url.startsWith('data:image/')) {
+            throw new BadRequestException(
+              `La URL de la imagen debe tener una extensión válida (${validExtensions.join(', ')}) o ser una imagen base64`
+            );
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      // Si no es una URL válida pero es una ruta relativa, está bien
+      if (!url.startsWith('/') && !url.startsWith('data:image/')) {
+        throw new BadRequestException('La URL de la imagen no es válida');
+      }
+    }
   }
 
   // --- MÉTODO findAll() CORREGIDO ---
@@ -297,10 +409,124 @@ export class ProyectoService {
       throw new ForbiddenException('No tienes permiso para actualizar este proyecto.');
     }
 
+    // Validar fechas si se están actualizando
+    if (dto.fecha_inicio || dto.fecha_fin) {
+      const nuevaFechaInicio = dto.fecha_inicio 
+        ? (typeof dto.fecha_inicio === 'string' ? new Date(dto.fecha_inicio) : dto.fecha_inicio)
+        : proyecto.fecha_inicio;
+      const nuevaFechaFin = dto.fecha_fin 
+        ? (typeof dto.fecha_fin === 'string' ? new Date(dto.fecha_fin) : dto.fecha_fin)
+        : proyecto.fecha_fin;
+
+      if (nuevaFechaInicio > nuevaFechaFin) {
+        throw new BadRequestException('La fecha de inicio debe ser anterior a la fecha de fin');
+      }
+
+      // Validar que las fases existentes estén dentro del nuevo rango
+      const fases = await this.faseRepo.find({
+        where: { id_proyecto: id },
+        relations: ['tareas']
+      });
+
+      for (const fase of fases) {
+        if (fase.fecha_inicio && new Date(fase.fecha_inicio) < nuevaFechaInicio) {
+          throw new BadRequestException(
+            `La fase "${fase.nombre}" tiene una fecha de inicio (${fase.fecha_inicio}) anterior a la nueva fecha de inicio del proyecto`
+          );
+        }
+        if (fase.fecha_fin && new Date(fase.fecha_fin) > nuevaFechaFin) {
+          throw new BadRequestException(
+            `La fase "${fase.nombre}" tiene una fecha de fin (${fase.fecha_fin}) posterior a la nueva fecha de fin del proyecto`
+          );
+        }
+
+        // Validar tareas dentro de las fases
+        if (fase.tareas && fase.tareas.length > 0) {
+          for (const tarea of fase.tareas) {
+            if (tarea.fecha_inicio && new Date(tarea.fecha_inicio) < nuevaFechaInicio) {
+              throw new BadRequestException(
+                `La tarea "${tarea.descripcion.substring(0, 50)}..." tiene una fecha de inicio anterior a la nueva fecha de inicio del proyecto`
+              );
+            }
+            if (tarea.fecha_fin && new Date(tarea.fecha_fin) > nuevaFechaFin) {
+              throw new BadRequestException(
+                `La tarea "${tarea.descripcion.substring(0, 50)}..." tiene una fecha de fin posterior a la nueva fecha de fin del proyecto`
+              );
+            }
+          }
+        }
+      }
+    }
+
+    // Guardar estado anterior para notificaciones
+    const estadoAnteriorId = proyecto.id_estado;
+    let estadoAnteriorNombre = 'Desconocido';
+    let estadoNuevoNombre = 'Desconocido';
+
+    // Obtener nombres de estados si hay cambio
+    if (dto.id_estado !== undefined && dto.id_estado !== estadoAnteriorId) {
+      const estadoAnterior = await this.estadoRepo.findOne({ where: { id_estado: estadoAnteriorId } });
+      const estadoNuevo = await this.estadoRepo.findOne({ where: { id_estado: dto.id_estado } });
+      estadoAnteriorNombre = estadoAnterior?.nombre || 'Desconocido';
+      estadoNuevoNombre = estadoNuevo?.nombre || 'Desconocido';
+    }
+
+    // Validar presupuesto vs donaciones si se está actualizando
+    if (dto.presupuesto_total !== undefined) {
+      if (dto.presupuesto_total < 0) {
+        throw new BadRequestException('El presupuesto no puede ser negativo');
+      }
+      if (dto.presupuesto_total > 999999999999.99) {
+        throw new BadRequestException('El presupuesto excede el límite máximo permitido');
+      }
+
+      // Validar que el nuevo presupuesto no sea menor que las donaciones asignadas
+      const { DonacionProyecto } = await import('../donacion-proyecto/donacion-proyecto.entity');
+      const donacionProyectoRepo = this.repo.manager.getRepository(DonacionProyecto);
+      const donacionesAsignadas = await donacionProyectoRepo
+        .createQueryBuilder('dp')
+        .where('dp.id_proyecto = :id_proyecto', { id_proyecto: id })
+        .select('SUM(dp.monto_asignado)', 'total')
+        .getRawOne();
+
+      const totalDonaciones = parseFloat(donacionesAsignadas?.total || '0');
+      if (dto.presupuesto_total < totalDonaciones) {
+        throw new BadRequestException(
+          `El presupuesto (${dto.presupuesto_total.toLocaleString()}) no puede ser menor que el total de donaciones asignadas (${totalDonaciones.toLocaleString()})`
+        );
+      }
+    }
+
+    // Validar imágenes si se están actualizando
+    if (dto.imagen_principal !== undefined) {
+      this.validateImageUrl(dto.imagen_principal);
+    }
+    if (dto.banner !== undefined && dto.banner) {
+      this.validateImageUrl(dto.banner);
+    }
+
     // Actualizar campos explícitamente para asegurar que todos los campos se manejen correctamente
-    if (dto.nombre !== undefined) proyecto.nombre = dto.nombre.trim();
-    if (dto.descripcion !== undefined) proyecto.descripcion = dto.descripcion.trim();
-    if (dto.objetivo !== undefined) proyecto.objetivo = dto.objetivo.trim();
+    if (dto.nombre !== undefined) {
+      if (dto.nombre.trim().length < 3) {
+        throw new BadRequestException('El nombre del proyecto debe tener al menos 3 caracteres');
+      }
+      if (dto.nombre.trim().length > 100) {
+        throw new BadRequestException('El nombre del proyecto no puede exceder 100 caracteres');
+      }
+      proyecto.nombre = dto.nombre.trim();
+    }
+    if (dto.descripcion !== undefined) {
+      if (dto.descripcion.trim().length < 10) {
+        throw new BadRequestException('La descripción del proyecto debe tener al menos 10 caracteres');
+      }
+      proyecto.descripcion = dto.descripcion.trim();
+    }
+    if (dto.objetivo !== undefined) {
+      if (dto.objetivo.trim().length < 10) {
+        throw new BadRequestException('El objetivo del proyecto debe tener al menos 10 caracteres');
+      }
+      proyecto.objetivo = dto.objetivo.trim();
+    }
     if (dto.ubicacion !== undefined) proyecto.ubicacion = dto.ubicacion.trim();
     if (dto.fecha_inicio !== undefined) proyecto.fecha_inicio = typeof dto.fecha_inicio === 'string' ? new Date(dto.fecha_inicio) : dto.fecha_inicio;
     if (dto.fecha_fin !== undefined) proyecto.fecha_fin = typeof dto.fecha_fin === 'string' ? new Date(dto.fecha_fin) : dto.fecha_fin;
@@ -311,8 +537,27 @@ export class ProyectoService {
     if (dto.es_publico !== undefined) proyecto.es_publico = dto.es_publico;
     if (dto.requisitos !== undefined) proyecto.requisitos = dto.requisitos;
     if (dto.id_estado !== undefined) proyecto.id_estado = dto.id_estado;
+    if (dto.banner !== undefined) proyecto.banner = dto.banner;
 
-    return this.repo.save(proyecto);
+    const proyectoActualizado = await this.repo.save(proyecto);
+
+    // Notificar cambio de estado si hubo cambio
+    if (dto.id_estado !== undefined && dto.id_estado !== estadoAnteriorId) {
+      try {
+        await this.notificacionService.notificarCambioEstadoProyecto(
+          proyecto.id_proyecto,
+          proyecto.id_organizacion,
+          estadoAnteriorNombre,
+          estadoNuevoNombre,
+          proyecto.nombre
+        );
+      } catch (error) {
+        // No fallar la actualización si la notificación falla
+        console.error('Error al notificar cambio de estado:', error);
+      }
+    }
+
+    return proyectoActualizado;
   }
 
   async remove(id: number, user: Usuario) {
@@ -412,6 +657,35 @@ export class ProyectoService {
 
     this.faseRepo.merge(fase, dto);
     await this.faseRepo.save(fase);
+    return this.findOne(proyectoId);
+  }
+
+  async reorderFases(proyectoId: number, ordenes: { id_fase: number; orden: number }[], user: Usuario) {
+    const proyecto = await this.findOne(proyectoId);
+    const organizacion = await this.orgRepo.findOne({ where: { id_usuario: user.id_usuario } });
+
+    if (user.tipo_usuario !== 'admin' && proyecto.id_organizacion !== organizacion.id_organizacion) {
+      throw new ForbiddenException('No tienes permiso para reordenar las fases de este proyecto.');
+    }
+
+    // Validar que todas las fases pertenecen al proyecto
+    const faseIds = ordenes.map(o => o.id_fase);
+    const fases = await this.faseRepo.find({
+      where: faseIds.map(id => ({ id_fase: id, id_proyecto: proyectoId }))
+    });
+
+    if (fases.length !== ordenes.length) {
+      throw new BadRequestException('Algunas fases no pertenecen a este proyecto');
+    }
+
+    // Actualizar el orden de cada fase
+    const updates = ordenes.map(({ id_fase, orden }) =>
+      this.faseRepo.update(id_fase, { orden })
+    );
+
+    await Promise.all(updates);
+
+    // Retornar el proyecto actualizado con las fases reordenadas
     return this.findOne(proyectoId);
   }
 
@@ -603,8 +877,7 @@ export class ProyectoService {
 
       console.log(`Buscando proyectos para voluntario ${voluntario.id_voluntario}`);
 
-      // Obtener todas las asignaciones del voluntario con relaciones
-      // Intentar cargar con relaciones, si falla, cargar sin relaciones y luego cargarlas manualmente
+      // 1. Obtener proyectos donde el voluntario tiene asignaciones (tareas asignadas)
       let asignaciones;
       try {
         asignaciones = await this.asignacionRepo.find({
@@ -613,12 +886,10 @@ export class ProyectoService {
         });
       } catch (relationError) {
         console.error('Error cargando asignaciones con relaciones:', relationError);
-        // Intentar cargar sin relaciones y luego cargarlas manualmente
         asignaciones = await this.asignacionRepo.find({
           where: { id_voluntario: voluntario.id_voluntario }
         });
         
-        // Cargar relaciones manualmente
         for (const asignacion of asignaciones) {
           try {
             const tarea = await this.tareaRepo.findOne({
@@ -627,7 +898,6 @@ export class ProyectoService {
             });
             asignacion.tarea = tarea;
             
-            // Cargar rol si existe id_rol
             if (asignacion.id_rol) {
               const rol = await this.rolRepo.findOne({
                 where: { id_rol: asignacion.id_rol }
@@ -640,70 +910,124 @@ export class ProyectoService {
         }
       }
 
-      console.log(`Encontradas ${asignaciones.length} asignaciones`);
+      // 2. Obtener proyectos donde el voluntario tiene solicitudes de inscripción aprobadas
+      const solicitudesAprobadas = await this.solicitudRepo.find({
+        where: {
+          id_voluntario: voluntario.id_voluntario,
+          estado: 'aprobada'
+        },
+        relations: ['proyecto']
+      });
 
-      if (asignaciones.length === 0) {
+      console.log(`Encontradas ${asignaciones.length} asignaciones y ${solicitudesAprobadas.length} solicitudes aprobadas`);
+
+      // 3. Agrupar proyectos por ID (de asignaciones y solicitudes aprobadas)
+      const proyectosMap = new Map<number, any>();
+      
+      // Agregar proyectos de asignaciones
+      asignaciones.forEach(asignacion => {
+        const proyecto = asignacion.tarea?.fase?.proyecto;
+        if (!proyecto) return;
+
+        const proyectoId = proyecto.id_proyecto;
+        
+        if (!proyectosMap.has(proyectoId)) {
+          proyectosMap.set(proyectoId, {
+            proyecto: proyecto,
+            roles: new Set(),
+            rolesArray: [],
+            tieneAsignaciones: true,
+            tieneSolicitudAprobada: false
+          });
+        }
+
+        const proyectoData = proyectosMap.get(proyectoId);
+        proyectoData.tieneAsignaciones = true;
+
+        // Agregar rol si existe
+        if (asignacion.rol) {
+          proyectoData.roles.add(asignacion.rol.id_rol);
+        }
+      });
+
+      // Agregar proyectos de solicitudes aprobadas (incluso sin asignaciones)
+      // Usar for...of en lugar de forEach para permitir await
+      for (const solicitud of solicitudesAprobadas) {
+        const proyectoId = solicitud.id_proyecto;
+        
+        if (!proyectosMap.has(proyectoId)) {
+          // Si no está en el mapa, intentar obtener el proyecto desde la relación o cargarlo
+          let proyecto = solicitud.proyecto;
+          
+          // Si la relación no está cargada, cargar el proyecto manualmente
+          if (!proyecto && proyectoId) {
+            proyecto = await this.repo.findOne({
+              where: { id_proyecto: proyectoId },
+              relations: ['organizacion', 'estado']
+            });
+          }
+          
+          if (proyecto) {
+            proyectosMap.set(proyectoId, {
+              proyecto: proyecto,
+              roles: new Set(),
+              rolesArray: [],
+              tieneAsignaciones: false,
+              tieneSolicitudAprobada: true
+            });
+          }
+        } else {
+          // Si ya está en el mapa, marcar que tiene solicitud aprobada
+          proyectosMap.get(proyectoId).tieneSolicitudAprobada = true;
+        }
+      }
+
+      // Si no hay proyectos (ni asignaciones ni solicitudes aprobadas), retornar vacío
+      if (proyectosMap.size === 0) {
         return [];
       }
 
-    // Agrupar por proyecto y obtener roles únicos
-    const proyectosMap = new Map<number, any>();
-    
-    asignaciones.forEach(asignacion => {
-      const proyecto = asignacion.tarea?.fase?.proyecto;
-      if (!proyecto) return;
+      // 4. Obtener proyectos completos con todas sus relaciones
+      const proyectosIds = Array.from(proyectosMap.keys());
+      const proyectos = await this.repo.find({
+        where: proyectosIds.map(id => ({ id_proyecto: id })),
+        relations: ['organizacion', 'estado', 'beneficio', 'fases', 'fases.tareas'],
+        order: { creado_en: 'DESC' }
+      });
 
-      const proyectoId = proyecto.id_proyecto;
-      
-      if (!proyectosMap.has(proyectoId)) {
-        proyectosMap.set(proyectoId, {
-          proyecto: proyecto,
-          roles: new Set(),
-          rolesArray: []
-        });
-      }
+      // 5. Combinar proyectos con roles asignados
+      return proyectos.map(proyecto => {
+        const proyectoData = proyectosMap.get(proyecto.id_proyecto);
+        if (!proyectoData) return null;
 
-      // Agregar rol si existe
-      if (asignacion.rol) {
-        proyectosMap.get(proyectoId).roles.add(asignacion.rol.id_rol);
-      }
-    });
+        const rolesIds = Array.from(proyectoData.roles);
+        
+        // Obtener roles completos de las asignaciones
+        const rolesAsignados = asignaciones
+          .filter(a => {
+            const proyId = a.tarea?.fase?.proyecto?.id_proyecto;
+            return proyId === proyecto.id_proyecto && a.rol;
+          })
+          .map(a => ({
+            id_rol: a.rol.id_rol,
+            nombre: a.rol.nombre,
+            descripcion: a.rol.descripcion,
+            tipo_rol: a.rol.tipo_rol
+          }))
+          .filter((rol, index, self) => 
+            index === self.findIndex(r => r.id_rol === rol.id_rol)
+          );
 
-    // Obtener proyectos completos con todas sus relaciones
-    const proyectosIds = Array.from(proyectosMap.keys());
-    const proyectos = await this.repo.find({
-      where: proyectosIds.map(id => ({ id_proyecto: id })),
-      relations: ['organizacion', 'estado', 'beneficio'],
-      order: { creado_en: 'DESC' }
-    });
-
-    // Combinar proyectos con roles asignados
-    return proyectos.map(proyecto => {
-      const proyectoData = proyectosMap.get(proyecto.id_proyecto);
-      const rolesIds = Array.from(proyectoData.roles);
-      
-      // Obtener roles completos
-      const rolesAsignados = asignaciones
-        .filter(a => {
-          const proyId = a.tarea?.fase?.proyecto?.id_proyecto;
-          return proyId === proyecto.id_proyecto && a.rol;
-        })
-        .map(a => ({
-          id_rol: a.rol.id_rol,
-          nombre: a.rol.nombre,
-          descripcion: a.rol.descripcion,
-          tipo_rol: a.rol.tipo_rol
-        }))
-        .filter((rol, index, self) => 
-          index === self.findIndex(r => r.id_rol === rol.id_rol)
-        );
-
-      return {
-        ...proyecto,
-        rolesAsignados: rolesAsignados,
-        roles: rolesAsignados.map(r => r.nombre).join(', ') // Para compatibilidad
-      };
-    });
+        return {
+          ...proyecto,
+          rolesAsignados: rolesAsignados,
+          roles: rolesAsignados.length > 0 
+            ? rolesAsignados.map(r => r.nombre).join(', ') 
+            : 'Voluntario', // Si no tiene roles asignados, mostrar "Voluntario" por defecto
+          tieneAsignaciones: proyectoData.tieneAsignaciones || false,
+          tieneSolicitudAprobada: proyectoData.tieneSolicitudAprobada || false
+        };
+      }).filter(p => p !== null); // Filtrar nulls por si acaso
     } catch (error) {
       console.error('Error en findProjectsByVoluntario:', error);
       return [];

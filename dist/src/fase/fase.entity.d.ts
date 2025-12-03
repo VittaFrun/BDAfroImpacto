@@ -5,6 +5,8 @@ export declare class Fase {
     nombre: string;
     descripcion: string;
     orden: number;
+    fecha_inicio: Date;
+    fecha_fin: Date;
     id_proyecto: number;
     proyecto: Proyecto;
     creado_en: Date;

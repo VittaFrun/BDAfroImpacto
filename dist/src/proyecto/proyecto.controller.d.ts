@@ -12,6 +12,8 @@ export declare class ProyectoController {
     findAll(user: Usuario): Promise<import("./proyecto.entity").Proyecto[] | {
         rolesAsignados: any;
         roles: any;
+        tieneAsignaciones: any;
+        tieneSolicitudAprobada: any;
         id_proyecto: number;
         nombre: string;
         descripcion: string;
@@ -21,6 +23,7 @@ export declare class ProyectoController {
         fecha_inicio: Date;
         fecha_fin: Date;
         imagen_principal: string;
+        banner: string;
         documento: string;
         presupuesto_total: number;
         es_publico: boolean;
@@ -48,6 +51,12 @@ export declare class ProyectoController {
     getPhases(id: string): Promise<import("./proyecto.entity").Proyecto>;
     addPhase(id: string, dto: CreateFaseDto, user: Usuario): Promise<import("./proyecto.entity").Proyecto>;
     updatePhase(id: string, phaseId: string, dto: Partial<CreateFaseDto>, user: Usuario): Promise<import("./proyecto.entity").Proyecto>;
+    reorderPhases(id: string, body: {
+        ordenes: {
+            id_fase: number;
+            orden: number;
+        }[];
+    }, user: Usuario): Promise<import("./proyecto.entity").Proyecto>;
     removePhase(id: string, phaseId: string, user: Usuario): Promise<import("./proyecto.entity").Proyecto>;
     getTasks(id: string): Promise<import("./proyecto.entity").Proyecto>;
     addTask(id: string, dto: CreateTareaDto, user: Usuario): Promise<import("./proyecto.entity").Proyecto>;
